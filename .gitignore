@@ -1,0 +1,30 @@
+# StreamClipper data files — created on first run, never committed.
+# They hold secrets (passwords, OAuth tokens, YouTube cookies).
+src/users_db.json
+src/social_config.json
+src/google_credentials.json
+src/youtube_cookies.txt
+src/youtube_cookies_uploaded_at.txt
+src/sessions.json
+src/youtube_tokens.json
+src/upload_counts.json
+
+# Generated clips (auto-deleted after 24h by the app anyway).
+src/static/clips/
+
+# Build / runtime artefacts.
+__pycache__/
+*.pyc
+*.log
+*.bak
+caddy-data/
+caddy-config/
+*.zip
+
+# Local test artefacts.
+test_*.py
+check_*.py
+*.jpg
+*.jpeg
+*.png
+*.mp4

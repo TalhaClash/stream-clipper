@@ -1,0 +1,214 @@
+/* StreamClipper gaming theme — shared by the dashboard (index.html) and admin panel.
+   Applied under body.gaming only. Additive on top of Tailwind: no element IDs,
+   no JS-managed class strings are touched here. */
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Russo+One&display=swap');
+
+:root {
+  --gx-bg: #0F0F23;
+  --gx-card: #1E1C35;
+  --gx-primary: #7C3AED;
+  --gx-accent: #F43F5E;
+  --gx-secondary: #A78BFA;
+  --gx-border: #4C1D95;
+  --gx-text: #E2E8F0;
+  --gx-muted: #94A3B8;
+}
+
+body.gaming {
+  font-family: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--gx-bg);
+  background-image:
+    radial-gradient(900px 500px at 85% -10%, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(700px 420px at -10% 110%, rgba(244, 63, 94, 0.14), transparent 60%);
+  background-attachment: fixed;
+}
+
+body.gaming h1, body.gaming h2, body.gaming h3,
+body.gaming .font-black, body.gaming .font-extrabold {
+  font-family: 'Russo One', 'Chakra Petch', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+body.gaming ::selection { background: #7C3AED; color: #fff; }
+body.gaming ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.gaming ::-webkit-scrollbar-thumb { background: #4C1D95; border-radius: 8px; border: 2px solid #0F0F23; }
+body.gaming ::-webkit-scrollbar-track { background: #0F0F23; }
+
+/* Sticky header: neon bottom edge */
+body.gaming header {
+  border-color: rgba(76, 29, 149, 0.7);
+  box-shadow: 0 1px 0 rgba(124, 58, 237, 0.35), 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+body.gaming header button, body.gaming header a {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+body.gaming header button:hover, body.gaming header a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.45);
+}
+
+/* Pulsing logo tile */
+body.gaming .logo-tile { animation: gx-logo-glow 3.2s ease-in-out infinite; }
+@keyframes gx-logo-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0), 0 8px 24px rgba(124, 58, 237, 0.35); }
+  50% { box-shadow: 0 0 22px 2px rgba(124, 58, 237, 0.55), 0 8px 24px rgba(124, 58, 237, 0.35); }
+}
+
+/* Generate button: the main CTA glows */
+body.gaming #submitBtn {
+  box-shadow: 0 0 28px rgba(124, 58, 237, 0.5), 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+body.gaming #submitBtn:hover {
+  box-shadow: 0 0 42px rgba(124, 58, 237, 0.75), 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Focus glow on every form control */
+body.gaming input:focus, body.gaming textarea:focus, body.gaming select:focus {
+  border-color: #7C3AED !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.28), 0 0 18px rgba(124, 58, 237, 0.25);
+  outline: none;
+}
+
+/* Entrance: main sections rise in, staggered */
+body.gaming main > * { animation: gx-fade-up 0.55s cubic-bezier(0.22, 0.9, 0.3, 1) both; }
+body.gaming main > *:nth-child(2) { animation-delay: 0.08s; }
+body.gaming main > *:nth-child(3) { animation-delay: 0.16s; }
+body.gaming main > *:nth-child(4) { animation-delay: 0.24s; }
+@keyframes gx-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modals pop in */
+body.gaming .fixed.inset-0 { animation: gx-pop 0.22s ease both; }
+@keyframes gx-pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gaming main > *, body.gaming .fixed.inset-0, body.gaming .logo-tile { animation: none !important; }
+}
+
+/* ---------- Animated background layers (same engine as the login page) ---------- */
+body.gaming #bg3d { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; pointer-events: none; }
+body.gaming .aurora { position: fixed; border-radius: 9999px; filter: blur(90px); z-index: 0; pointer-events: none; }
+body.gaming .aurora-a { width: 560px; height: 560px; top: -180px; left: -120px;
+  background: radial-gradient(circle, rgba(124,58,237,.45), transparent 65%);
+  animation: gx-drift-a 18s ease-in-out infinite alternate; }
+body.gaming .aurora-b { width: 520px; height: 520px; bottom: -200px; right: -140px;
+  background: radial-gradient(circle, rgba(244,63,94,.34), transparent 65%);
+  animation: gx-drift-b 22s ease-in-out infinite alternate; }
+body.gaming .aurora-c { width: 380px; height: 380px; top: 38%; left: 58%;
+  background: radial-gradient(circle, rgba(34,211,238,.22), transparent 65%);
+  animation: gx-drift-a 26s ease-in-out infinite alternate-reverse; }
+@keyframes gx-drift-a { from { transform: translate(0,0) scale(1); } to { transform: translate(70px,40px) scale(1.15); } }
+@keyframes gx-drift-b { from { transform: translate(0,0) scale(1.1); } to { transform: translate(-60px,-50px) scale(.95); } }
+
+/* Synthwave perspective grid floor */
+body.gaming .grid-floor { position: fixed; left: -20%; right: -20%; bottom: -6%; height: 42vh; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(124,58,237,.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,.28) 1px, transparent 1px);
+  background-size: 48px 48px;
+  transform: perspective(480px) rotateX(62deg) scale(1.5);
+  transform-origin: bottom center;
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.85) 25%, transparent 92%);
+  mask-image: linear-gradient(to top, rgba(0,0,0,.85) 25%, transparent 92%);
+  animation: gx-gridmove 2.4s linear infinite; }
+@keyframes gx-gridmove { from { background-position-y: 0; } to { background-position-y: 48px; } }
+
+/* Gradient-shine display title (same as login) */
+body.gaming .gx-title {
+  background: linear-gradient(92deg, #C4B5FD 0%, #A78BFA 30%, #FB7185 62%, #22D3EE 100%);
+  background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: gx-title-shine 6s ease-in-out infinite alternate; }
+@keyframes gx-title-shine { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+/* Glass panel for the hero / studio sections */
+body.gaming .gx-panel {
+  background: linear-gradient(165deg, rgba(30,28,53,.88), rgba(15,15,35,.92));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(76,29,149,.65);
+  box-shadow: 0 0 32px rgba(124,58,237,.18), 0 20px 50px rgba(0,0,0,.45);
+}
+
+/* Feature chips */
+body.gaming .gx-chip { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+body.gaming .gx-chip:hover { transform: translateY(-2px); border-color: rgba(124,58,237,.7); box-shadow: 0 0 18px rgba(124,58,237,.35); }
+
+/* Header: animated gradient line under the nav */
+body.gaming header::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(90deg, transparent, #7C3AED 25%, #F43F5E 50%, #22D3EE 75%, transparent);
+  background-size: 200% 100%; animation: gx-line-flow 5s linear infinite; }
+@keyframes gx-line-flow { from { background-position: 0% 0; } to { background-position: 200% 0; } }
+
+/* ---------- Visual layout picker ---------- */
+body.gaming .gx-layout-card {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 8px 8px; min-width: 86px; cursor: pointer;
+  background: rgba(15,15,35,.85); border: 1px solid rgba(76,29,149,.6); border-radius: 12px;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+body.gaming .gx-layout-card:hover { transform: translateY(-2px); border-color: rgba(124,58,237,.8); box-shadow: 0 0 16px rgba(124,58,237,.3); }
+body.gaming .gx-layout-card.gx-active {
+  border-color: #7C3AED; background: rgba(124,58,237,.16);
+  box-shadow: 0 0 20px rgba(124,58,237,.45); }
+body.gaming .gx-layout-card span { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: #C4B5FD; }
+/* Mini 9:16 diagram: cam block (violet) + game block (slate) */
+body.gaming .gx-mini { width: 30px; height: 54px; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column;
+  border: 1px solid rgba(148,163,184,.35); background: #0F0F23; }
+body.gaming .gx-mini .gx-mini-cam { background: linear-gradient(135deg, #7C3AED, #A78BFA); }
+body.gaming .gx-mini .gx-mini-game { background: linear-gradient(180deg, #334155, #1E293B); flex: 1; }
+body.gaming .gx-mini-fill .gx-mini-cam { display: none; }
+body.gaming .gx-mini-split .gx-mini-cam { height: 37.5%; }
+body.gaming .gx-mini-stream .gx-mini-cam { height: 40%; }
+body.gaming .gx-mini-blur .gx-mini-cam { display: none; }
+body.gaming .gx-mini-blur .gx-mini-game { margin: 12px 4px; border-radius: 2px; }
+
+/* ---------- Progress bar shimmer ---------- */
+body.gaming #progressBar { position: relative; overflow: hidden; }
+body.gaming #progressBar::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+  animation: gx-shimmer 1.4s linear infinite; }
+@keyframes gx-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ---------- Clip cards: entrance + hover lift ---------- */
+body.gaming #clipsGrid > div { animation: gx-card-in .5s cubic-bezier(.22,.9,.3,1) both; }
+body.gaming #clipsGrid > div:nth-child(2) { animation-delay: .07s; }
+body.gaming #clipsGrid > div:nth-child(3) { animation-delay: .14s; }
+body.gaming #clipsGrid > div:nth-child(4) { animation-delay: .21s; }
+body.gaming #clipsGrid > div:nth-child(5) { animation-delay: .28s; }
+body.gaming #clipsGrid > div:nth-child(6) { animation-delay: .35s; }
+@keyframes gx-card-in { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+body.gaming #clipsGrid > div:hover {
+  transform: translateY(-4px);
+  border-color: rgba(124,58,237,.65) !important;
+  box-shadow: 0 0 28px rgba(124,58,237,.35), 0 18px 40px rgba(0,0,0,.5); }
+
+/* Virality badge pulse */
+body.gaming #clipsGrid .fa-fire { animation: gx-fire-pulse 1.6s ease-in-out infinite; }
+@keyframes gx-fire-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+
+/* ---------- Modals: glass + neon edge ---------- */
+body.gaming #accountsModal > div, body.gaming #publishModal > div {
+  background: linear-gradient(165deg, rgba(30,28,53,.96), rgba(15,15,35,.97));
+  border: 1px solid rgba(76,29,149,.75);
+  box-shadow: 0 0 42px rgba(124,58,237,.3), 0 24px 70px rgba(0,0,0,.6);
+}
+
+/* Primary buttons: slow gradient shift */
+body.gaming #submitBtn, body.gaming #publishActionBtn {
+  background-size: 180% 100%;
+  animation: gx-btn-flow 4s ease-in-out infinite alternate; }
+@keyframes gx-btn-flow { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  body.gaming .aurora-a, body.gaming .aurora-b, body.gaming .aurora-c, body.gaming .grid-floor,
+  body.gaming .gx-title, body.gaming header::after, body.gaming #progressBar::after,
+  body.gaming #clipsGrid > div, body.gaming #clipsGrid .fa-fire,
+  body.gaming #submitBtn, body.gaming #publishActionBtn { animation: none !important; }
+  body.gaming #clipsGrid > div { opacity: 1; }
+}

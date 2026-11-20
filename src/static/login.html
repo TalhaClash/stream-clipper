@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | StreamClipper Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Russo One"', 'sans-serif'],
+            body: ['"Chakra Petch"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              500: '#9333ea',
+              600: '#7e22ce',
+              700: '#6b21a8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --gx-bg: #0F0F23;
+      --gx-card: #1E1C35;
+      --gx-primary: #7C3AED;
+      --gx-accent: #F43F5E;
+      --gx-secondary: #A78BFA;
+      --gx-border: #4C1D95;
+    }
+    html, body { background: var(--gx-bg); }
+    body { font-family: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; }
+    ::selection { background: #7C3AED; color: #fff; }
+
+    /* ---------- Animated background layers ---------- */
+    #bg3d { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+    .aurora { position: fixed; border-radius: 9999px; filter: blur(90px); z-index: 0; pointer-events: none; }
+    .aurora-a { width: 560px; height: 560px; top: -180px; left: -120px;
+      background: radial-gradient(circle, rgba(124,58,237,.55), transparent 65%);
+      animation: drift-a 18s ease-in-out infinite alternate; }
+    .aurora-b { width: 520px; height: 520px; bottom: -200px; right: -140px;
+      background: radial-gradient(circle, rgba(244,63,94,.42), transparent 65%);
+      animation: drift-b 22s ease-in-out infinite alternate; }
+    .aurora-c { width: 380px; height: 380px; top: 38%; left: 58%;
+      background: radial-gradient(circle, rgba(34,211,238,.28), transparent 65%);
+      animation: drift-a 26s ease-in-out infinite alternate-reverse; }
+    @keyframes drift-a { from { transform: translate(0,0) scale(1); } to { transform: translate(70px,40px) scale(1.15); } }
+    @keyframes drift-b { from { transform: translate(0,0) scale(1.1); } to { transform: translate(-60px,-50px) scale(.95); } }
+
+    /* Synthwave perspective grid floor */
+    .grid-floor { position: fixed; left: -20%; right: -20%; bottom: -6%; height: 42vh; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(124,58,237,.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,.35) 1px, transparent 1px);
+      background-size: 48px 48px;
+      transform: perspective(480px) rotateX(62deg) scale(1.5);
+      transform-origin: bottom center;
+      -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,.9) 25%, transparent 92%);
+      mask-image: linear-gradient(to top, rgba(0,0,0,.9) 25%, transparent 92%);
+      animation: gridmove 2.4s linear infinite; }
+    @keyframes gridmove { from { background-position-y: 0; } to { background-position-y: 48px; } }
+
+    /* ---------- Login card ---------- */
+    .border-wrap { position: relative; border-radius: 28px; padding: 1.5px;
+      background: conic-gradient(from var(--gx-angle, 0deg), #7C3AED, #F43F5E, #22D3EE, #A78BFA, #7C3AED);
+      box-shadow: 0 0 42px rgba(124,58,237,.35), 0 24px 70px rgba(0,0,0,.55);
+      animation: border-spin 7s linear infinite; }
+    @property --gx-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+    @keyframes border-spin { to { --gx-angle: 360deg; } }
+    .gx-card { background: linear-gradient(165deg, rgba(30,28,53,.92), rgba(15,15,35,.94));
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border-radius: 26px; }
+    #tiltCard { transform-style: preserve-3d; will-change: transform; }
+    .gx-title { font-family: 'Russo One', sans-serif;
+      background: linear-gradient(92deg, #C4B5FD 0%, #A78BFA 30%, #FB7185 62%, #22D3EE 100%);
+      background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: title-shine 6s ease-in-out infinite alternate; }
+    @keyframes title-shine { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    .logo-tile { animation: logo-glow 3.2s ease-in-out infinite; }
+    @keyframes logo-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0), 0 10px 26px rgba(124,58,237,.4); }
+      50% { box-shadow: 0 0 26px 3px rgba(124,58,237,.6), 0 10px 26px rgba(124,58,237,.4); } }
+
+    /* Buttons */
+    .gx-google { transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease; }
+    .gx-google:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(255,255,255,.28), 0 14px 30px rgba(0,0,0,.45); }
+    .gx-google:active { transform: translateY(0) scale(.99); }
+    .gx-input { transition: border-color .2s ease, box-shadow .2s ease; }
+    .gx-input:focus { border-color: #7C3AED !important; box-shadow: 0 0 0 3px rgba(124,58,237,.3), 0 0 20px rgba(124,58,237,.28); outline: none; }
+    .gx-admin-btn { transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease; }
+    .gx-admin-btn:hover { box-shadow: 0 0 22px rgba(124,58,237,.45); }
+
+    /* Entrance */
+    .gx-rise { opacity: 0; animation: rise .7s cubic-bezier(.22,.9,.3,1) forwards; }
+    @keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+    .gx-rise-1 { animation-delay: .08s; } .gx-rise-2 { animation-delay: .2s; }
+    .gx-rise-3 { animation-delay: .32s; } .gx-rise-4 { animation-delay: .44s; }
+    .gx-rise-5 { animation-delay: .56s; }
+
+    /* Feature chips */
+    .gx-chip { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+    .gx-chip:hover { transform: translateY(-2px); border-color: rgba(124,58,237,.7); box-shadow: 0 0 18px rgba(124,58,237,.35); }
+
+    /* Error shake */
+    .gx-shake { animation: gx-shake .45s ease; }
+    @keyframes gx-shake {
+      0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); }
+      40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+
+    .gx-spin { animation: gx-spin 1s linear infinite; }
+    @keyframes gx-spin { to { transform: rotate(360deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .aurora-a, .aurora-b, .aurora-c, .grid-floor, .border-wrap, .gx-title, .logo-tile { animation: none !important; }
+      .gx-rise { opacity: 1; animation: none; }
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen font-body antialiased relative">
+
+  <!-- 3D motion background -->
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="aurora aurora-a" aria-hidden="true"></div>
+  <div class="aurora aurora-b" aria-hidden="true"></div>
+  <div class="aurora aurora-c" aria-hidden="true"></div>
+  <div class="grid-floor" aria-hidden="true"></div>
+
+  <!-- Content -->
+  <div id="tiltZone" class="gx-rise gx-rise-1 relative z-10 min-h-screen flex flex-col items-center justify-center p-4 py-10">
+    <div id="tiltCard" class="w-full max-w-md">
+      <div class="border-wrap">
+        <div class="gx-card p-8 space-y-6 relative overflow-hidden">
+
+          <!-- Header / Brand -->
+          <div class="text-center space-y-2 relative">
+            <div class="logo-tile w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 via-violet-500 to-indigo-500 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-solid fa-scissors text-white text-2xl"></i>
+            </div>
+            <h1 class="gx-title text-3xl tracking-wide">STREAMCLIPPER</h1>
+            <p class="text-[11px] font-semibold tracking-[0.35em] text-violet-300/80">STUDIO</p>
+            <p class="text-xs text-slate-400 pt-1">Turn streams into viral Shorts — clip the peak, post the moment.</p>
+          </div>
+
+          <!-- Alert / Error message -->
+          <div id="errorAlert" class="hidden p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-exclamation shrink-0 mt-0.5"></i>
+            <span id="errorText">Access Denied: Your Gmail is not authorized.</span>
+          </div>
+
+          <!-- Google 1-Click Sign-In Button -->
+          <div class="space-y-3">
+            <a
+              id="googleLoginLink"
+              href="/api/auth/google/login"
+              class="gx-google w-full py-3.5 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-sm flex items-center justify-center gap-2.5 shadow-lg cursor-pointer"
+            >
+              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Sign in with Google Account</span>
+            </a>
+
+            <p class="text-[11px] text-center text-slate-500 leading-relaxed">
+              Sign in with the Google account the admin approved. A first sign-in waits for admin approval before the tool opens.
+            </p>
+          </div>
+
+          <!-- Master Admin Accordion / Collapsible -->
+          <div class="border-t border-violet-900/60 pt-3">
+            <button
+              type="button"
+              onclick="toggleAdminLogin()"
+              class="text-[11px] text-slate-400 hover:text-purple-300 font-semibold flex items-center justify-between w-full p-1 cursor-pointer"
+            >
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-key text-purple-400"></i> Master Owner Password Login</span>
+              <i id="adminCaret" class="fa-solid fa-chevron-down text-[10px] transition transform"></i>
+            </button>
+
+            <form id="adminPasswordForm" class="hidden mt-3 space-y-3 pt-2">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Admin Username:</label>
+                <input type="text" id="adminUser" value="admin" class="gx-input w-full bg-[#0F0F23] border border-violet-900/70 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-purple-500">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Password:</label>
+                <input type="password" id="adminPass" placeholder="••••••••" class="gx-input w-full bg-[#0F0F23] border border-violet-900/70 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-purple-500">
+              </div>
+              <button type="submit" id="adminSubmitBtn" class="gx-admin-btn w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span>Log in as Master Admin</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Security Footnote -->
+          <p class="text-[10px] text-center text-slate-500">
+            <i class="fa-solid fa-shield-halved text-purple-400 mr-1"></i> Access restricted. Only Gmail accounts invited by the Administrator can log in.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature chips -->
+    <div class="w-full max-w-md flex items-center justify-center gap-2.5 mt-6 flex-wrap">
+      <span class="gx-chip gx-rise gx-rise-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default">
+        <svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+        AI VIRAL DETECTION
+      </span>
+      <span class="gx-chip gx-rise gx-rise-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default">
+        <svg class="w-3.5 h-3.5 text-violet-400" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v3l4-1.5L14 10l4-1.5V5H6zm0 11h12v-3l-4 1.5L10 14.5 6 16z" opacity=".95"/></svg>
+        9:16 SHORTS
+      </span>
+      <span class="gx-chip gx-rise gx-rise-5 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default">
+        <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c3.5 2 5.5 5.5 5.5 9.5 0 1.5-.4 2.8-1 4l2.5 2.5-4 .5c-.8 1.4-2 2.5-3.5 3l.5-3.5L9 15.5 7 19.5 5.5 15 3 12.5 7 12l-.5-3C8 6.5 10 3.5 12 2zm0 6.5A1.8 1.8 0 1 0 12 12a1.8 1.8 0 0 0 0-3.5z"/></svg>
+        1-CLICK PUBLISH
+      </span>
+    </div>
+  </div>
+
+  <script>
+    const errorAlert = document.getElementById('errorAlert');
+    const errorText = document.getElementById('errorText');
+    const adminForm = document.getElementById('adminPasswordForm');
+    const adminCaret = document.getElementById('adminCaret');
+    const adminSubmitBtn = document.getElementById('adminSubmitBtn');
+
+    function flashError() {
+      errorAlert.classList.remove('gx-shake');
+      void errorAlert.offsetWidth;
+      errorAlert.classList.add('gx-shake');
+    }
+
+    // Check for URL error params (e.g. from Google OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error')) {
+      const err = urlParams.get('error');
+      if (err === 'access_denied') {
+        errorText.textContent = 'Access Denied: This account is not authorized.';
+      } else if (err === 'google_not_configured') {
+        errorText.textContent = 'Google OAuth credentials not configured yet in Admin. Ask the admin to set them up.';
+      } else if (err === 'admin_required') {
+        errorText.textContent = 'Only the admin can do that. Sign in as admin first.';
+      } else {
+        errorText.textContent = 'Sign-in failed. Please try again.';
+      }
+      errorAlert.classList.remove('hidden');
+      flashError();
+    }
+
+    // Toggle Master Admin Password Form
+    function toggleAdminLogin() {
+      adminForm.classList.toggle('hidden');
+      adminCaret.classList.toggle('rotate-180');
+    }
+
+    // Master Admin Password Submit
+    adminForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.classList.add('hidden');
+      const u = document.getElementById('adminUser').value.trim();
+      const p = document.getElementById('adminPass').value;
+      const origHtml = adminSubmitBtn.innerHTML;
+      adminSubmitBtn.disabled = true;
+      adminSubmitBtn.innerHTML = '<i class="fa-solid fa-circle-notch gx-spin"></i><span>Signing in&hellip;</span>';
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.token) {
+          // The session cookie is set by the server (HttpOnly) — the page
+          // never touches the token itself.
+          window.location.href = data.user.role === 'admin' ? '/admin' : '/';
+        } else {
+          errorText.textContent = data.detail || 'Invalid master admin password.';
+          errorAlert.classList.remove('hidden');
+          flashError();
+        }
+      } catch (e) {
+        errorText.textContent = 'Server connection error.';
+        errorAlert.classList.remove('hidden');
+        flashError();
+      } finally {
+        adminSubmitBtn.disabled = false;
+        adminSubmitBtn.innerHTML = origHtml;
+      }
+    });
+  </script>
+
+  <script>
+    /* ---------- 3D motion background (self-contained canvas engine) ---------- */
+    (function () {
+      const canvas = document.getElementById('bg3d');
+      const ctx = canvas.getContext('2d');
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let W = 0, H = 0, cx = 0, cy = 0, rafId = null;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        W = canvas.clientWidth; H = canvas.clientHeight;
+        canvas.width = Math.max(1, W * dpr); canvas.height = Math.max(1, H * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cx = W / 2; cy = H / 2;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Mouse parallax (lerped)
+      let mx = 0, my = 0, tmx = 0, tmy = 0;
+      window.addEventListener('pointermove', function (e) {
+        tmx = e.clientX / window.innerWidth - 0.5;
+        tmy = e.clientY / window.innerHeight - 0.5;
+      }, { passive: true });
+
+      // --- 3D particle field ---
+      const P = [];
+      for (let i = 0; i < 130; i++) {
+        P.push({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random(), c: i % 3 });
+      }
+      const PCOLORS = ['rgba(226,232,240,', 'rgba(167,139,250,', 'rgba(251,113,133,'];
+
+      // --- Wireframe polyhedra ---
+      function icosahedron() {
+        const t = (1 + Math.sqrt(5)) / 2;
+        const v = [[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];
+        const e = [[0,11],[0,5],[0,1],[0,10],[0,7],[1,5],[1,9],[1,8],[1,7],[2,11],[2,3],[2,4],[2,10],[2,6],[3,9],[3,8],[3,4],[3,6],[4,9],[4,5],[4,11],[5,9],[5,11],[6,10],[6,7],[6,8],[7,10],[7,8],[8,9],[10,11]];
+        return { v: v, e: e };
+      }
+      function octahedron() {
+        const v = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+        const e = [[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
+        return { v: v, e: e };
+      }
+      function cube() {
+        const v = [];
+        for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) v.push([x, y, z]);
+        const e = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+        return { v: v, e: e };
+      }
+      const shapes = [
+        { geo: icosahedron(), fx: 0.70, fy: 0.30, r: 0.16, speed: 0.0042, color: '167,139,250', tilt: 0.42 },
+        { geo: octahedron(),  fx: 0.15, fy: 0.74, r: 0.085, speed: -0.006, color: '251,113,133', tilt: 0.55 },
+        { geo: cube(),        fx: 0.86, fy: 0.76, r: 0.055, speed: 0.008,  color: '34,211,238',  tilt: 0.35 },
+      ];
+
+      function project(x, y, z, ay, ax) {
+        // Rotate around Y, then X
+        const cy1 = Math.cos(ay), sy1 = Math.sin(ay);
+        let x1 = x * cy1 + z * sy1, z1 = -x * sy1 + z * cy1, y1 = y;
+        const cx1 = Math.cos(ax), sx1 = Math.sin(ax);
+        const y2 = y1 * cx1 - z1 * sx1, z2 = y1 * sx1 + z1 * cx1;
+        const f = 3.4;
+        const s = f / (f + z2);
+        return { x: x1 * s, y: y2 * s, s: s };
+      }
+
+      function drawShape(sh, t) {
+        const R = Math.min(W, H) * sh.r * (W < 640 ? 0.62 : 1);
+        const px = W * sh.fx, py = H * sh.fy;
+        const ay = t * sh.speed + 0.6, ax = sh.tilt;
+        const pts = sh.geo.v.map(function (v) {
+          const p = project(v[0], v[1], v[2], ay, ax);
+          return { x: px + p.x * R + mx * 18, y: py + p.y * R + my * 14, s: p.s };
+        });
+        ctx.save();
+        ctx.strokeStyle = 'rgba(' + sh.color + ',0.75)';
+        ctx.fillStyle = 'rgba(' + sh.color + ',0.9)';
+        ctx.lineWidth = 1.2;
+        ctx.shadowColor = 'rgba(' + sh.color + ',0.9)';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        sh.geo.e.forEach(function (ed) {
+          const a = pts[ed[0]], b = pts[ed[1]];
+          ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+        });
+        ctx.stroke();
+        pts.forEach(function (p) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      let t = 0;
+      function frame() {
+        t += 1;
+        mx += (tmx - mx) * 0.04; my += (tmy - my) * 0.04;
+        ctx.clearRect(0, 0, W, H);
+
+        // Particles (drift toward viewer, wrap)
+        const proj = [];
+        for (let i = 0; i < P.length; i++) {
+          const p = P[i];
+          p.z -= 0.0011; if (p.z <= 0.02) { p.z = 1; p.x = (Math.random() - 0.5) * 2; p.y = (Math.random() - 0.5) * 2; }
+          const depth = 1 - p.z;
+          const sx = cx + p.x * W * 0.5 * (1.05 - p.z * 0.55) + mx * 46 * depth;
+          const sy = cy + p.y * H * 0.5 * (1.05 - p.z * 0.55) + my * 34 * depth;
+          const r = depth * 2.1 + 0.4;
+          ctx.fillStyle = PCOLORS[p.c] + (0.25 + depth * 0.65) + ')';
+          ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+          if (i < 50) proj.push({ x: sx, y: sy });
+        }
+        // Constellation links between near particles
+        ctx.strokeStyle = 'rgba(167,139,250,0.10)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < proj.length; i++) {
+          for (let j = i + 1; j < proj.length; j++) {
+            const dx = proj[i].x - proj[j].x, dy = proj[i].y - proj[j].y;
+            if (dx * dx + dy * dy < 10000) { ctx.moveTo(proj[i].x, proj[i].y); ctx.lineTo(proj[j].x, proj[j].y); }
+          }
+        }
+        ctx.stroke();
+
+        shapes.forEach(function (sh) { drawShape(sh, t); });
+
+        if (!reduced) rafId = requestAnimationFrame(frame);
+      }
+
+      frame();
+      if (!reduced) {
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) { if (rafId) cancelAnimationFrame(rafId); rafId = null; }
+          else if (!rafId) { rafId = requestAnimationFrame(frame); }
+        });
+      }
+
+      // ---------- 3D tilt on the login card ----------
+      const tiltCard = document.getElementById('tiltCard');
+      const tiltZone = document.getElementById('tiltZone');
+      if (tiltCard && tiltZone && !reduced && window.matchMedia('(pointer: fine)').matches) {
+        let rx = 0, ry = 0, trx = 0, tryy = 0;
+        tiltZone.addEventListener('pointermove', function (e) {
+          const r = tiltCard.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5;
+          const py = (e.clientY - r.top) / r.height - 0.5;
+          tryy = Math.max(-1, Math.min(1, px)) * 10;
+          trx = Math.max(-1, Math.min(1, py)) * -8;
+        });
+        tiltZone.addEventListener('pointerleave', function () { trx = 0; tryy = 0; });
+        (function tiltLoop() {
+          rx += (trx - rx) * 0.08; ry += (tryy - ry) * 0.08;
+          tiltCard.style.transform = 'perspective(1100px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+          requestAnimationFrame(tiltLoop);
+        })();
+      }
+    })();
+  </script>
+</body>
+</html>

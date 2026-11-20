@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Access Control | StreamClipper</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/gaming.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#9333ea',
+              600: '#7e22ce',
+              700: '#6b21a8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased gaming">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="logo-tile w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-xl tracking-tight text-white">StreamClipper <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Admin</span></span>
+          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">Master Access Control</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <a 
+          href="/" 
+          class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-2 transition"
+        >
+          <i class="fa-solid fa-film text-purple-400"></i>
+          <span>Clipper Studio</span>
+        </a>
+        <button 
+          onclick="handleLogout()" 
+          class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 border border-red-500/20 flex items-center gap-1.5 transition"
+        >
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- Overview Banner -->
+    <div class="bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border border-purple-800/30 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-lock text-purple-400"></i>
+          Exclusive Tool Access Control
+        </h2>
+        <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+          Anyone can sign in with Google — new sign-ins wait here as Pending until you approve them. Only approved accounts can use the tool. You can also invite team members, assign editor roles, or revoke access with 1 click.
+        </p>
+      </div>
+      <button 
+        onclick="openAddUserModal()"
+        class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-purple-600/20 transition shrink-0 cursor-pointer"
+      >
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Add / Authorize User</span>
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+      <button id="tabUsersBtn" onclick="switchTab('users')" class="px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white transition flex items-center gap-2">
+        <i class="fa-solid fa-users"></i> Authorized Users (<span id="userCount">1</span>)
+      </button>
+      <button id="tabOAuthBtn" onclick="switchTab('oauth')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-400 transition flex items-center gap-2">
+        <i class="fa-brands fa-youtube text-red-500"></i> Real YouTube OAuth & Social Setup
+      </button>
+    </div>
+
+    <!-- Tab 1: User Access Management -->
+    <section id="tabUsers" class="space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-950/50 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                <th class="p-4">User</th>
+                <th class="p-4">Role</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">Created Date</th>
+                <th class="p-4 text-right">Access Controls</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-800 text-slate-200">
+              <!-- Users dynamically loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-400"></i> Change Admin Password
+        </h3>
+        <p class="text-[11px] text-slate-400 mt-1">Change the password for your own account. You will be signed out and asked to log in again with the new password.</p>
+        <form id="changePasswordForm" class="mt-4 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Current Password:</label>
+            <input type="password" id="currentPassword" required autocomplete="current-password" placeholder="Enter current password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">New Password (at least 6 characters):</label>
+            <input type="password" id="newPassword" required minlength="6" autocomplete="new-password" placeholder="Enter new password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none" />
+          </div>
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition">Change Password</button>
+          <span id="changePasswordMsg" class="text-xs text-slate-400 ml-2"></span>
+        </form>
+      </div>
+    </section>
+
+    <!-- Tab 2: Real YouTube & Social OAuth Configuration -->
+    <section id="tabOAuth" class="hidden space-y-6">
+      
+      <!-- YouTube Direct OAuth Box -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-red-600/10 text-red-500 flex items-center justify-center text-xl">
+              <i class="fa-brands fa-youtube"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Real YouTube Channel Connection (Google OAuth 2.0)</h3>
+              <p class="text-xs text-slate-400">Connect your actual Google Account to publish vertical Shorts directly to your channel</p>
+            </div>
+          </div>
+          <div id="ytLiveBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
+            Checking...
+          </div>
+        </div>
+
+        <!-- 3-Step Walkthrough Guide -->
+        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2.5">
+          <h4 class="font-bold text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-purple-400"></i>
+            How to get your free Google Cloud Client ID & Secret (takes 2 minutes, 100% free):
+          </h4>
+          <ol class="list-decimal list-inside space-y-1.5 text-slate-400 text-[11px]">
+            <li>Open the <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" class="text-purple-400 underline font-semibold">Google Cloud Console</a> and click <strong>Enable</strong> for <em>YouTube Data API v3</em>.</li>
+            <li>Go to <strong>APIs & Services &rarr; Credentials</strong>, click <strong>Create Credentials &rarr; OAuth client ID</strong> (Application type: <em>Web application</em>).</li>
+            <li>Under <strong>Authorized redirect URIs</strong>, add: <code class="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded font-mono">https://YOUR-DOMAIN/api/oauth/google/callback</code> (and for the login button: <code class="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded font-mono">https://YOUR-DOMAIN/api/auth/google/callback</code>).</li>
+            <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong> below and click <strong>Save & Connect</strong>.</li>
+          </ol>
+        </div>
+
+        <!-- Credentials Form -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Google OAuth Client ID:</label>
+            <input 
+              type="text" 
+              id="googleClientIdInput"
+              placeholder="e.g. 123456789-xxxx.apps.googleusercontent.com"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-red-500 font-mono"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Google OAuth Client Secret:</label>
+            <input 
+              type="password" 
+              id="googleClientSecretInput"
+              placeholder="GOCSPX-xxxxxxxxxxxxxxxx"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 outline-none focus:border-red-500 font-mono"
+            >
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <button 
+            onclick="saveGoogleCredentials()" 
+            class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 cursor-pointer"
+          >
+            Save Google Credentials
+          </button>
+          
+          <button 
+            id="googleSignInBtn"
+            onclick="initiateGoogleLogin()" 
+            class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-red-600/20 flex items-center gap-2 transition cursor-pointer"
+          >
+            <i class="fa-brands fa-google"></i>
+            <span>Sign in with Google & Link YouTube Channel</span>
+          </button>
+        </div>
+
+        <!-- Channels linked by each user (per-user connect) -->
+        <div id="ytConnectedUsers" class="pt-3 border-t border-slate-800 text-xs text-slate-400"></div>
+      </div>
+
+      <!-- YouTube Cookies (bot-wall login) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-cookie-bite"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">YouTube Login Cookies (fixes "Sign in to confirm you're not a bot")</h3>
+            <p class="text-xs text-slate-400">YouTube blocks downloads from servers unless the tool sends a signed-in browser's cookies. YouTube rotates these every few weeks — when Generate starts failing, refresh them here.</p>
+          </div>
+        </div>
+      <!-- Cookie life timer: when the cookies were last uploaded, how
+           long until YouTube rotates them (~2h), and a clear expired
+           state. Same timer as the dashboard. -->
+      <div id="ytCookiesTimer" class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-slate-700/60 bg-slate-800/40 px-4 py-3 text-xs">
+        <span class="flex items-center gap-2 font-semibold">
+          <span id="ytCookieDot" class="inline-block w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+          <span id="ytCookieState" class="text-slate-300">Checking cookies…</span>
+        </span>
+        <span id="ytCookieUpdated" class="text-slate-400"></span>
+        <span id="ytCookieCountdown" class="font-mono font-bold text-slate-200"></span>
+        <span id="ytCookieExpiredNote" class="hidden font-semibold text-red-400">Cookies expired — upload fresh cookies to start generating clips.</span>
+      </div>
+        <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-400">
+          <li>Install the free <strong class="text-slate-200">Get cookies.txt LOCALLY</strong> extension in your browser.</li>
+          <li>Open <strong class="text-slate-200">youtube.com</strong> and make sure you're signed in.</li>
+          <li>Click the extension → <strong class="text-slate-200">Export</strong> (all cookies) → save the cookies.txt file.</li>
+          <li>Choose that file below and click <strong class="text-slate-200">Upload Cookies</strong>.</li>
+        </ol>
+        <div class="flex flex-wrap items-center gap-3">
+          <input type="file" id="ytCookiesFile" accept=".txt" class="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+          <button onclick="uploadYoutubeCookies()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition cursor-pointer">Upload Cookies</button>
+          <span id="ytCookiesStatus" class="text-xs text-slate-400"></span>
+        </div>
+      </div>
+
+      <!-- TikTok & Instagram Settings Box -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- TikTok -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-brands fa-tiktok text-pink-500 text-xl"></i>
+            <div>
+              <h4 class="text-sm font-bold text-white">TikTok Content Posting API</h4>
+              <p class="text-[11px] text-slate-400">Direct upload to creator account</p>
+              <p class="text-[11px] text-amber-400/90 mt-1">Not wired up yet — direct posting needs a TikTok developer app with the Content Posting API. Saving a handle only records it for now.</p>
+            </div>
+          </div>
+          <input 
+            type="text" 
+            id="tiktokCreatorInput" 
+            placeholder="Creator Username (e.g. @GamerHighlights)"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-pink-500"
+          >
+          <button 
+            onclick="saveTikTokConfig()" 
+            class="w-full py-2 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl text-xs transition"
+          >
+            Update TikTok Creator
+          </button>
+        </div>
+
+        <!-- Instagram -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-brands fa-instagram text-purple-400 text-xl"></i>
+            <div>
+              <h4 class="text-sm font-bold text-white">Instagram Reels API</h4>
+              <p class="text-[11px] text-slate-400">Graph API publishing handle</p>
+              <p class="text-[11px] text-amber-400/90 mt-1">Not wired up yet — direct posting needs a Meta app with the Instagram Graph API (Business/Creator account linked to a Facebook Page). Saving a handle only records it for now.</p>
+            </div>
+          </div>
+          <input 
+            type="text" 
+            id="instaCreatorInput" 
+            placeholder="Instagram Handle (e.g. @ViralReels)"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500"
+          >
+          <button 
+            onclick="saveInstaConfig()" 
+            class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs transition"
+          >
+            Update Instagram Account
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Add User Modal -->
+  <div id="addUserModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-purple-400"></i>
+          Authorize New User / Gmail
+        </h3>
+        <button onclick="closeAddUserModal()" class="text-slate-400 hover:text-white text-sm p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="addUserForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name / Display Name:</label>
+          <input 
+            type="text" 
+            id="newUserName" 
+            required 
+            placeholder="e.g. Alex Editor" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Authorized Gmail / Email Address:</label>
+          <input 
+            type="email" 
+            id="newUserEmail" 
+            required 
+            placeholder="e.g. creator@gmail.com" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500 font-mono"
+          >
+          <p class="text-[10px] text-slate-500 mt-1">When this user signs in with this Gmail, access will be granted.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Access Role:</label>
+          <select id="newUserRole" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none">
+            <option value="editor" selected>Editor (Can Clip & Publish, No Admin Privileges)</option>
+            <option value="admin">Administrator (Can Manage Users & OAuth)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Optional Backup Password:</label>
+          <input 
+            type="password" 
+            id="newUserPassword" 
+            placeholder="Leave blank for Gmail-only login" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500"
+          >
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-purple-600/20 cursor-pointer"
+        >
+          Authorize Gmail Access
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tab) {
+      if (tab === 'users') {
+        document.getElementById('tabUsers').classList.remove('hidden');
+        document.getElementById('tabOAuth').classList.add('hidden');
+        document.getElementById('tabUsersBtn').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white transition flex items-center gap-2';
+        document.getElementById('tabOAuthBtn').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-400 transition flex items-center gap-2';
+      } else {
+        document.getElementById('tabUsers').classList.add('hidden');
+        document.getElementById('tabOAuth').classList.remove('hidden');
+        document.getElementById('tabUsersBtn').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-400 transition flex items-center gap-2';
+        document.getElementById('tabOAuthBtn').className = 'px-4 py-2 rounded-xl text-xs font-bold bg-purple-600 text-white transition flex items-center gap-2';
+      }
+    }
+
+    // Load users
+    async function loadUsers() {
+      try {
+        const resp = await fetch('/api/admin/users');
+        if (resp.ok) {
+          const data = await resp.json();
+          renderUsers(data.users || []);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Escape text before it goes into innerHTML. User names and emails
+    // come from outside (Google profiles, admin input) — a "<img
+    // onerror=...>" in a name used to run as code in the ADMIN's browser.
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderUsers(users) {
+      // Pending approvals first — they are the ones waiting on the admin.
+      users = [...users].sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1));
+      const pendingCount = users.filter(u => u.status === 'pending').length;
+      document.getElementById('userCount').textContent = pendingCount > 0 ? `${users.length} (${pendingCount} pending)` : users.length;
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = users.map(u => {
+        const isActive = u.status === 'active';
+        const isPending = u.status === 'pending';
+        const isAdmin = u.role === 'admin';
+        const email = u.email || `${u.username}@gmail.com`;
+        const name = esc(u.name || u.username);
+        const safeEmail = esc(email);
+        const safeUsername = esc(u.username);
+        const safeRole = esc(u.role || 'editor');
+        const safeCreated = esc(u.created_at || '');
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600/30 to-indigo-600/30 text-purple-300 flex items-center justify-center font-bold">
+                  ${esc((u.name || u.username || '?').charAt(0).toUpperCase())}
+                </div>
+                <div>
+                  <span class="font-bold text-white block">${name}</span>
+                  <span class="text-[11px] text-purple-300 font-mono flex items-center gap-1.5 mt-0.5">
+                    <i class="fa-solid fa-envelope text-[10px] text-slate-500"></i>
+                    <span>${safeEmail}</span>
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td class="p-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isAdmin ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}">
+                ${safeRole.toUpperCase()}
+              </span>
+            </td>
+            <td class="p-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${isPending ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : (isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30')}">
+                ${isPending ? 'Pending Approval' : (isActive ? 'Active (Access Granted)' : 'Revoked (Access Blocked)')}
+              </span>
+            </td>
+            <td class="p-4 text-slate-400 text-[11px]">
+              ${safeCreated}
+            </td>
+            <td class="p-4 text-right space-x-2">
+              ${u.username === 'admin' ? `
+                <span class="text-[10px] text-slate-500 italic">Protected Owner</span>
+              ` : (isPending ? `
+                <button 
+                  onclick="approveUser('${safeUsername}')"
+                  class="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition"
+                >
+                  Approve Access
+                </button>
+                <button 
+                  onclick="deleteUser('${safeUsername}')"
+                  class="px-2.5 py-1 rounded text-[11px] font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                >
+                  Decline
+                </button>
+              ` : `
+                <button 
+                  onclick="toggleUserStatus('${safeUsername}', '${isActive ? 'disabled' : 'active'}')"
+                  class="px-2.5 py-1 rounded text-[11px] font-semibold transition ${isActive ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'}"
+                >
+                  ${isActive ? 'Revoke Access' : 'Restore Access'}
+                </button>
+                <button 
+                  onclick="deleteUser('${safeUsername}')"
+                  class="px-2.5 py-1 rounded text-[11px] font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+                >
+                  Delete
+                </button>
+              `)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function approveUser(username) {
+      try {
+        const resp = await fetch(`/api/admin/users/${username}/approve`, { method: 'POST' });
+        if (resp.ok) loadUsers();
+        else alert('Could not approve this user.');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function toggleUserStatus(username, status) {
+      try {
+        const resp = await fetch(`/api/admin/users/${username}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        if (resp.ok) loadUsers();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function deleteUser(username) {
+      if (!confirm(`Are you sure you want to permanently delete access for '${username}'?`)) return;
+      try {
+        const resp = await fetch(`/api/admin/users/${username}`, { method: 'DELETE' });
+        if (resp.ok) loadUsers();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openAddUserModal() {
+      document.getElementById('addUserModal').classList.remove('hidden');
+    }
+
+    function closeAddUserModal() {
+      document.getElementById('addUserModal').classList.add('hidden');
+    }
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('newUserName').value.trim();
+      const email = document.getElementById('newUserEmail').value.trim();
+      const password = document.getElementById('newUserPassword').value;
+      const role = document.getElementById('newUserRole').value;
+      const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      try {
+        const resp = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, username, password, role })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          closeAddUserModal();
+          document.getElementById('addUserForm').reset();
+          loadUsers();
+          alert(`Gmail '${email}' successfully authorized! They can now log in.`);
+        } else {
+          alert(data.detail || 'Failed to authorize user');
+        }
+      } catch (err) {
+        alert('Server error creating user');
+      }
+    });
+
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('changePasswordMsg');
+      msg.textContent = '';
+      const current_password = document.getElementById('currentPassword').value;
+      const new_password = document.getElementById('newPassword').value;
+      try {
+        const resp = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_password, new_password })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          alert('Password changed. Please log in again with your new password.');
+          window.location.href = '/login';
+        } else {
+          msg.textContent = data.detail || 'Failed to change password';
+        }
+      } catch (err) {
+        msg.textContent = 'Server error changing password';
+      }
+    });
+
+    // YouTube OAuth & Social Config
+    async function loadSocialConfig() {
+      try {
+        const resp = await fetch('/api/admin/oauth/config');
+        if (resp.ok) {
+          const data = await resp.json();
+          const google = data.google || {};
+          const ytBadge = document.getElementById('ytLiveBadge');
+          if (google.configured) {
+            document.getElementById('googleClientIdInput').value = google.client_id || '';
+            if (google.connected_channel) {
+              ytBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+              ytBadge.textContent = `Connected: ${google.connected_channel.title}`;
+            } else {
+              ytBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30';
+              ytBadge.textContent = 'API Configured • Sign-in Needed';
+            }
+          } else {
+            ytBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700';
+            ytBadge.textContent = 'Not Configured';
+          }
+
+          const usersBox = document.getElementById('ytConnectedUsers');
+          const connectedUsers = data.connected_users || [];
+          if (connectedUsers.length) {
+            usersBox.innerHTML = '<p class="font-bold text-white mb-1">Channels linked by users (each user posts to their own):</p>' + connectedUsers.map(u => `<p>• ${esc(u.username)} → ${esc(u.channel_title || 'Unknown channel')}</p>`).join('');
+          } else {
+            usersBox.textContent = 'No user has linked a channel yet.';
+          }
+
+          if (data.accounts?.tiktok?.username) {
+            document.getElementById('tiktokCreatorInput').value = data.accounts.tiktok.username;
+          }
+          if (data.accounts?.instagram?.username) {
+            document.getElementById('instaCreatorInput').value = data.accounts.instagram.username;
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Cookie life timer (same as the dashboard): live countdown to the
+    // ~2h rotation, refreshed from the server every 30s, ticking every
+    // second. Amber under 30 min, red + upload prompt past expiry.
+    let ytCookieExpiresAt = null;
+    function ytCookieTick() {
+      const dot = document.getElementById('ytCookieDot');
+      const state = document.getElementById('ytCookieState');
+      const countdown = document.getElementById('ytCookieCountdown');
+      const note = document.getElementById('ytCookieExpiredNote');
+      if (!dot || !state || !countdown || !note) return;
+      if (ytCookieExpiresAt === null) return;
+      const remain = Math.max(0, Math.floor((ytCookieExpiresAt - Date.now()) / 1000));
+      const h = Math.floor(remain / 3600);
+      const m = Math.floor((remain % 3600) / 60);
+      const s = remain % 60;
+      if (remain <= 0) {
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+        state.textContent = 'Cookies expired';
+        state.className = 'text-red-400';
+        countdown.textContent = '0h 00m 00s left';
+        countdown.className = 'font-mono font-bold text-red-400';
+        note.classList.remove('hidden');
+      } else {
+        const soon = remain < 30 * 60;
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full ' + (soon ? 'bg-amber-400' : 'bg-emerald-400');
+        state.textContent = soon ? 'Cookies expiring soon' : 'Cookies active';
+        state.className = soon ? 'text-amber-300' : 'text-emerald-300';
+        countdown.textContent = `Expires in ${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+        countdown.className = 'font-mono font-bold ' + (soon ? 'text-amber-300' : 'text-slate-200');
+        note.classList.add('hidden');
+      }
+    }
+    async function refreshYoutubeCookieTimer() {
+      const updated = document.getElementById('ytCookieUpdated');
+      const state = document.getElementById('ytCookieState');
+      try {
+        const resp = await fetch('/api/youtube-cookies/status');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data.exists || !data.updated_at) {
+          ytCookieExpiresAt = 0;
+          if (updated) updated.textContent = 'No cookies uploaded yet.';
+          ytCookieTick();
+          return;
+        }
+        // A fresh upload missing LOGIN_INFO (exported while not signed
+        // in to YouTube, or from the wrong profile) fails every
+        // download even though the timer says "active" — so show it
+        // as invalid, not active.
+        if (data.valid === false) {
+          ytCookieExpiresAt = 0;
+          const dot = document.getElementById('ytCookieDot');
+          const state = document.getElementById('ytCookieState');
+          const countdown = document.getElementById('ytCookieCountdown');
+          const note = document.getElementById('ytCookieExpiredNote');
+          if (dot) dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+          if (state) { state.textContent = 'Cookies invalid'; state.className = 'text-red-400'; }
+          if (countdown) { countdown.textContent = ''; countdown.className = 'font-mono font-bold text-red-400'; }
+          if (note) { note.textContent = 'This upload is missing the YouTube login cookie — re-export while signed in to YouTube and upload again.'; note.classList.remove('hidden'); }
+          if (updated) {
+            const d = new Date(data.updated_at);
+            updated.textContent = 'Updated ' + d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          }
+          return;
+        }
+        ytCookieExpiresAt = new Date(data.expires_at).getTime();
+        if (updated) {
+          const d = new Date(data.updated_at);
+          updated.textContent = 'Updated ' + d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (expires ~2h after upload)';
+        }
+        ytCookieTick();
+      } catch (e) {
+        if (state) state.textContent = 'Could not check cookies.';
+      }
+    }
+    refreshYoutubeCookieTimer();
+    setInterval(refreshYoutubeCookieTimer, 30000);
+    setInterval(ytCookieTick, 1000);
+
+    async function uploadYoutubeCookies() {
+      const input = document.getElementById('ytCookiesFile');
+      const status = document.getElementById('ytCookiesStatus');
+      if (!input.files || !input.files[0]) {
+        status.textContent = 'Choose a cookies.txt file first.';
+        status.className = 'text-xs text-red-400';
+        return;
+      }
+      const text = await input.files[0].text();
+      status.textContent = 'Uploading...';
+      status.className = 'text-xs text-slate-400';
+      try {
+        const resp = await fetch('/api/admin/youtube-cookies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          status.textContent = `Saved — ${data.youtube_cookies} YouTube cookies. Generate Clips should work again.`;
+          status.className = 'text-xs text-emerald-400';
+          refreshYoutubeCookieTimer();
+        } else {
+          status.textContent = data.detail || 'Upload failed.';
+          status.className = 'text-xs text-red-400';
+        }
+      } catch (e) {
+        status.textContent = 'Upload failed. Check the connection and try again.';
+        status.className = 'text-xs text-red-400';
+      }
+    }
+
+    async function saveGoogleCredentials() {
+      const clientId = document.getElementById('googleClientIdInput').value.trim();
+      const clientSecret = document.getElementById('googleClientSecretInput').value.trim();
+      if (!clientId || !clientSecret) {
+        alert('Please enter both Google Client ID and Client Secret');
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/admin/oauth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
+        });
+        if (resp.ok) {
+          alert('Google Credentials saved successfully!');
+          loadSocialConfig();
+        }
+      } catch (e) {
+        alert('Failed to save Google credentials');
+      }
+    }
+
+    async function initiateGoogleLogin() {
+      try {
+        const resp = await fetch('/api/oauth/google/auth-url');
+        const data = await resp.json();
+        if (data.auth_url) {
+          window.location.href = data.auth_url;
+        } else {
+          alert('Please enter and save your Google Client ID and Secret first.');
+        }
+      } catch (e) {
+        alert('Error generating Google OAuth URL');
+      }
+    }
+
+    async function saveTikTokConfig() {
+      const handle = document.getElementById('tiktokCreatorInput').value.trim();
+      if (!handle) return;
+      await fetch(`/api/social/connect/tiktok?username=${encodeURIComponent(handle)}`, { method: 'POST' });
+      alert(`TikTok handle updated to ${handle}`);
+    }
+
+    async function saveInstaConfig() {
+      const handle = document.getElementById('instaCreatorInput').value.trim();
+      if (!handle) return;
+      await fetch(`/api/social/connect/instagram?username=${encodeURIComponent(handle)}`, { method: 'POST' });
+      alert(`Instagram handle updated to ${handle}`);
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        // The cookie is HttpOnly now; the server call is what logs out.
+        // Even if it fails, send the user to the login page.
+      }
+      window.location.href = '/login';
+    }
+
+    loadUsers();
+    loadSocialConfig();
+    // Back from the Google channel-connect flow: confirm it worked.
+    if (new URLSearchParams(window.location.search).get('google_connected') === 'true') {
+      alert('YouTube channel connected! Your clips will now post to your own channel.');
+      history.replaceState({}, '', '/admin');
+    }
+  </script>
+</body>
+</html>

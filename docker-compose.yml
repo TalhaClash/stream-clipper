@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  stream-clipper:
+    build: .
+    container_name: stream-clipper
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/static/clips:/app/src/static/clips
+      - ./src/social_config.json:/app/src/social_config.json
+      - ./src/users_db.json:/app/src/users_db.json
+      - ./src/google_credentials.json:/app/src/google_credentials.json
+      - ./src/youtube_cookies.txt:/app/src/youtube_cookies.txt
+      # Upload-time sidecar (written only by the cookie upload endpoints).
+      # The cookies file's mtime is not a reliable upload time, so the
+      # timer reads this file instead. Host file must exist before the
+      # container recreates, or Docker makes a directory there.
+      - ./src/youtube_cookies_uploaded_at.txt:/app/src/youtube_cookies_uploaded_at.txt
+      - ./src/sessions.json:/app/src/sessions.json
+      - ./src/youtube_tokens.json:/app/src/youtube_tokens.json
+      - ./src/upload_counts.json:/app/src/upload_counts.json
+      # OPTIONAL: a live browser profile for yt-dlp --cookies-from-browser
+      # (read-only). Uncomment and point at a Chrome profile dir if you run
+      # a headless browser on the host to keep YouTube cookies fresh.
+      # - /path/to/chrome-profile:/app/yt-profile:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: stream-clipper-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+      - ./caddy-config:/config

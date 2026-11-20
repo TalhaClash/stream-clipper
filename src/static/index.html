@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamClipper Studio | Free Stream-to-Shorts AI</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/gaming.css">
+  <script src="/static/gaming-bg.js" defer></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#9333ea',
+              600: '#7e22ce',
+              700: '#6b21a8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .aspect-9-16 {
+      aspect-ratio: 9 / 16;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased gaming">
+
+  <!-- Animated 3D motion background (same engine as the login page) -->
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="aurora aurora-a" aria-hidden="true"></div>
+  <div class="aurora aurora-b" aria-hidden="true"></div>
+  <div class="aurora aurora-c" aria-hidden="true"></div>
+  <div class="grid-floor" aria-hidden="true"></div>
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="logo-tile w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <i class="fa-solid fa-scissors text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">StreamClipper</span>
+          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">100% Free / Local</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-3">
+        <!-- Connected Accounts Button -->
+        <button 
+          id="openAccountsBtn" 
+          onclick="openAccountsModal()" 
+          class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-2 transition shadow-sm hover:border-purple-500"
+        >
+          <i class="fa-solid fa-link text-purple-400"></i>
+          <span>Connected Accounts</span>
+          <span id="accountsCountBadge" class="px-1.5 py-0.2 rounded-full bg-purple-600/30 text-purple-300 text-[10px] font-bold">1/3</span>
+        </button>
+
+        <!-- Admin Access Button -->
+        <a 
+          href="/admin" 
+          class="px-3.5 py-1.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/50 text-xs font-semibold text-purple-300 border border-purple-800/50 flex items-center gap-1.5 transition shadow-sm"
+          title="Manage Users & API Credentials"
+        >
+          <i class="fa-solid fa-shield-halved text-purple-400"></i>
+          <span>Admin Access</span>
+        </a>
+
+
+        <!-- User Logout Button -->
+        <button 
+          onclick="handleLogout()" 
+          class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-400 hover:text-red-400 border border-slate-700 transition"
+          title="Sign Out"
+        >
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+
+        <span class="text-xs text-slate-400 hidden sm:flex items-center gap-1.5 border-l border-slate-800 pl-3">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Engine Online
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 relative z-10">
+
+    <!-- YouTube Login Cookies — shown on this page so anyone can fix a
+         "Sign in to confirm you're not a bot" failure without going to Admin -->
+    <div id="ytCookiesCard" class="gx-panel mb-10 p-6 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-cookie-bite"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">YouTube Login Cookies — fix it here when Generate stops working</h3>
+          <p class="text-xs text-slate-400">YouTube blocks downloads from servers unless the tool sends a signed-in browser's cookies. YouTube rotates these every couple of hours — when Generate starts failing with a sign-in error, refresh them here.</p>
+        </div>
+      </div>
+      <!-- Cookie life timer: when the cookies were last uploaded, how
+           long until YouTube rotates them (~2h), and a clear expired
+           state. Refreshes from the server every 30s; the countdown
+           ticks locally every second. -->
+      <div id="ytCookiesTimer" class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-slate-700/60 bg-slate-800/40 px-4 py-3 text-xs">
+        <span class="flex items-center gap-2 font-semibold">
+          <span id="ytCookieDot" class="inline-block w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+          <span id="ytCookieState" class="text-slate-300">Checking cookies…</span>
+        </span>
+        <span id="ytCookieUpdated" class="text-slate-400"></span>
+        <span id="ytCookieCountdown" class="font-mono font-bold text-slate-200"></span>
+        <span id="ytCookieExpiredNote" class="hidden font-semibold text-red-400">Cookies expired — upload fresh cookies to start generating clips.</span>
+      </div>
+      <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-400">
+        <li>Install the free <strong class="text-slate-200">Get cookies.txt LOCALLY</strong> extension, and turn on <strong class="text-slate-200">Allow in Incognito</strong> for it (chrome://extensions → Details).</li>
+        <li>Open an <strong class="text-slate-200">Incognito window</strong>, sign in to YouTube, and go to <strong class="text-slate-200">youtube.com/robots.txt</strong> — keep only that tab open.</li>
+        <li>Click the extension → <strong class="text-slate-200">Export</strong> → save the cookies.txt file.</li>
+        <li>Close the Incognito window, choose that file below, and click <strong class="text-slate-200">Upload Cookies</strong>.</li>
+      </ol>
+      <div class="flex flex-wrap items-center gap-3">
+        <input type="file" id="ytCookiesFile" accept=".txt" class="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+        <button onclick="uploadYoutubeCookies()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition cursor-pointer">Upload Cookies</button>
+        <span id="ytCookiesStatus" class="text-xs text-slate-400"></span>
+      </div>
+    </div>
+
+
+    <!-- Hero / URL Input Box -->
+    <div class="gx-panel bg-gradient-to-b from-slate-900 to-slate-900/50 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl mb-10">
+      <div class="max-w-3xl">
+        <h1 class="gx-title text-2xl md:text-3xl font-black text-white mb-2">Turn Streams into Viral 9:16 Shorts Instantly</h1>
+        <p class="text-slate-400 text-sm md:text-base mb-4">Paste any YouTube or Twitch stream link. Our engine scans audio decibels, reaction surges, and chat velocity to find peak excitement clusters and reframe them into 60fps vertical clips ready for TikTok & Shorts.</p>
+        <div class="flex flex-wrap gap-2 mb-6">
+          <span class="gx-chip px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default"><i class="fa-solid fa-bolt text-rose-400 mr-1"></i>AI VIRAL DETECTION</span>
+          <span class="gx-chip px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default"><i class="fa-solid fa-mobile-screen text-violet-400 mr-1"></i>9:16 SHORTS</span>
+          <span class="gx-chip px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default"><i class="fa-solid fa-gauge-high text-amber-400 mr-1"></i>60 FPS • 1080p</span>
+          <span class="gx-chip px-3 py-1.5 rounded-full bg-[#1E1C35]/80 backdrop-blur border border-violet-900/70 text-[10px] font-bold tracking-wider text-violet-200 cursor-default"><i class="fa-solid fa-paper-plane text-cyan-400 mr-1"></i>1-CLICK PUBLISH</span>
+        </div>
+      </div>
+
+      <!-- Waiting for approval (shown only to pending accounts) -->
+      <div id="pendingBanner" class="hidden mb-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-start gap-3">
+        <i class="fa-solid fa-hourglass-half mt-0.5"></i>
+        <div>
+          <p class="font-bold text-white">Your account is waiting for admin approval</p>
+          <p class="text-xs mt-1 text-amber-200/80">You signed in successfully. The admin has your request — once he approves it, you can generate clips. Please check back later.</p>
+        </div>
+      </div>
+
+      <form id="clipForm" class="space-y-4">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input 
+              type="url" 
+              id="streamUrl" 
+              required
+              placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/... or Twitch URL"
+              class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 text-white placeholder-slate-500 text-sm outline-none transition"
+            >
+          </div>
+          <button 
+            type="submit" 
+            id="submitBtn"
+            class="px-8 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition duration-200 shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Generate Clips</span>
+          </button>
+        </div>
+
+        <!-- Settings Row -->
+        <div class="flex flex-wrap items-center gap-5 pt-2 text-xs text-slate-400">
+          <!-- Format Layout -->
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-slate-300">Format:</span>
+            <select id="layoutSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 outline-none">
+              <option value="fill">Fill Screen (Full 9:16 - No Bars)</option>
+              <option value="split">Split Screen (Facecam Top + Game)</option>
+              <option value="stream" selected>Streamer 4:6 (Facecam Top + Game)</option>
+              <option value="blur">Blur Backdrop (Centered)</option>
+            </select>
+          </div>
+
+          <!-- Number of Clips -->
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-slate-300"><i class="fa-solid fa-layer-group text-purple-400"></i> Clips Count:</span>
+            <select id="numClipsSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-purple-300 font-semibold outline-none">
+              <option value="2">2 Clips</option>
+              <option value="3" selected>3 Clips (Recommended)</option>
+              <option value="4">4 Clips</option>
+              <option value="5">5 Clips (Max Highlights)</option>
+            </select>
+          </div>
+
+          <!-- Video Quality & FPS Option -->
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-slate-300"><i class="fa-solid fa-gauge-high text-amber-400"></i> Quality / FPS:</span>
+            <select id="fpsSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-amber-300 font-semibold outline-none">
+              <option value="60" selected>60 FPS (Ultra-Smooth 1080p Gaming)</option>
+              <option value="30">30 FPS (Standard 1080p Shorts)</option>
+            </select>
+          </div>
+
+          <!-- Clip Duration -->
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-slate-300">Clip Length:</span>
+            <select id="durationSelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 outline-none">
+              <option value="15">15 seconds (High Hype)</option>
+              <option value="30" selected>30 seconds (Optimal TikTok)</option>
+              <option value="60">60 seconds (Shorts Max)</option>
+            </select>
+          </div>
+
+          <!-- Subtitles Toggle -->
+          <div class="flex items-center gap-2">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="subtitlesCheck" checked class="rounded bg-slate-950 border-slate-800 text-purple-600 focus:ring-purple-500">
+              <span class="text-slate-300 font-medium">Auto Animated Subtitles</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Visual Format Picker (taps set the Format dropdown above, which stays the source of truth) -->
+        <div class="pt-3">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-semibold text-slate-300">Pick a format:</span>
+            <span class="text-[10px] text-slate-500">tap a preview — the dropdown stays in sync</span>
+          </div>
+          <div class="flex flex-wrap gap-3" id="layoutPicker">
+            <button type="button" class="gx-layout-card" data-layout="fill" onclick="setLayout('fill')">
+              <span class="gx-mini gx-mini-fill"><span class="gx-mini-cam"></span><span class="gx-mini-game"></span></span>
+              <span>Fill Screen</span>
+            </button>
+            <button type="button" class="gx-layout-card" data-layout="split" onclick="setLayout('split')">
+              <span class="gx-mini gx-mini-split"><span class="gx-mini-cam"></span><span class="gx-mini-game"></span></span>
+              <span>Split Screen</span>
+            </button>
+            <button type="button" class="gx-layout-card" data-layout="stream" onclick="setLayout('stream')">
+              <span class="gx-mini gx-mini-stream"><span class="gx-mini-cam"></span><span class="gx-mini-game"></span></span>
+              <span>Streamer 4:6</span>
+            </button>
+            <button type="button" class="gx-layout-card" data-layout="blur" onclick="setLayout('blur')">
+              <span class="gx-mini gx-mini-blur"><span class="gx-mini-cam"></span><span class="gx-mini-game"></span></span>
+              <span>Blur Backdrop</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Processing Progress Card -->
+      <div id="progressCard" class="hidden mt-6 p-4 rounded-xl bg-purple-950/20 border border-purple-800/30">
+        <div class="flex items-center justify-between mb-2">
+          <span id="progressStatusText" class="text-xs font-semibold text-purple-300 flex items-center gap-2">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            Initiating viral peak detection...
+          </span>
+          <span id="progressPercent" class="text-xs font-bold text-purple-400">10%</span>
+        </div>
+        <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+          <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clips Review Studio Section -->
+    <div id="studioSection">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-film text-purple-400"></i>
+            Detected Viral Clips
+          </h2>
+          <p class="text-slate-400 text-xs">Clips cut at peak excitement moments of your video, formatted in 9:16 vertical.</p>
+        </div>
+        <span id="clipCountBadge" class="text-xs font-medium px-3 py-1 bg-slate-900 border border-slate-800 rounded-full text-slate-400">
+          0 Clips
+        </span>
+      </div>
+
+      <!-- Clips Grid -->
+      <div id="clipsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered clips injected here -->
+      </div>
+    </div>
+
+    <!-- Social Accounts Management Modal -->
+    <div id="accountsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center">
+              <i class="fa-solid fa-share-nodes"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Social Channel Accounts</h3>
+              <p class="text-xs text-slate-400">Link your channels for instant 1-click posting</p>
+            </div>
+          </div>
+          <button onclick="closeAccountsModal()" class="text-slate-400 hover:text-white text-sm p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Accounts List -->
+        <div class="space-y-4">
+          <!-- YouTube Shorts -->
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <i class="fa-brands fa-youtube text-red-500 text-xl"></i>
+                <div>
+                  <span class="text-sm font-bold text-white block">YouTube Shorts</span>
+                  <span id="ytAccountStatus" class="text-[11px] text-slate-400">Not connected</span>
+                </div>
+              </div>
+              <span id="ytBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input 
+                type="text" 
+                id="ytChannelInput" 
+                placeholder="Channel Name or Handle (e.g. @GamerClips)" 
+                class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-red-500"
+              >
+              <button 
+                id="ytConnectBtn" 
+                onclick="handleConnect('youtube')"
+                class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition"
+              >
+                Connect
+              </button>
+            </div>
+            <!-- Daily Shorts limit (editors: 10/day, admin: no limit) -->
+            <div id="ytLimitRow" class="hidden pt-1">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-400"><i class="fa-solid fa-bolt text-amber-400"></i> Shorts posted today</span>
+                <span id="ytLimitText" class="font-bold text-white">0 / 10</span>
+              </div>
+              <div class="h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                <div id="ytLimitBar" class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TikTok -->
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <i class="fa-brands fa-tiktok text-pink-500 text-xl"></i>
+                <div>
+                  <span class="text-sm font-bold text-white block">TikTok</span>
+                  <span id="ttAccountStatus" class="text-[11px] text-slate-400">Not connected</span>
+                </div>
+              </div>
+              <span id="ttBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input 
+                type="text" 
+                id="ttChannelInput" 
+                placeholder="TikTok Handle (e.g. @GamerViral)" 
+                class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-pink-500"
+              >
+              <button 
+                id="ttConnectBtn" 
+                onclick="handleConnect('tiktok')"
+                class="px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-xs font-semibold transition"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+
+          <!-- Instagram Reels -->
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <i class="fa-brands fa-instagram text-purple-400 text-xl"></i>
+                <div>
+                  <span class="text-sm font-bold text-white block">Instagram Reels</span>
+                  <span id="igAccountStatus" class="text-[11px] text-slate-400">Not connected</span>
+                </div>
+              </div>
+              <span id="igBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input 
+                type="text" 
+                id="igChannelInput" 
+                placeholder="Instagram Handle (e.g. @GamerReels)" 
+                class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-purple-500"
+              >
+              <button 
+                id="igConnectBtn" 
+                onclick="handleConnect('instagram')"
+                class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold transition"
+              >
+                Connect
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google OAuth Direct Link Banner -->
+        <div class="p-3.5 rounded-xl bg-purple-950/40 border border-purple-800/40 text-xs text-purple-200 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-brands fa-google text-red-400 text-base"></i>
+            <div>
+              <span class="font-bold text-white block">Official Google OAuth Sign-In</span>
+              <span class="text-[10px] text-slate-400">Log into your Google account for live uploads</span>
+            </div>
+          </div>
+          <a href="/admin" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-[11px] transition shadow-md shrink-0">
+            Configure in Admin &rarr;
+          </a>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button onclick="closeAccountsModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Publishing Modal -->
+    <div id="publishModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div id="publishModalIcon" class="w-8 h-8 rounded-lg bg-red-600/20 text-red-500 flex items-center justify-center text-lg">
+              <i class="fa-brands fa-youtube"></i>
+            </div>
+            <div>
+              <h3 id="publishModalTitle" class="text-base font-bold text-white">Publish to YouTube Shorts</h3>
+              <p id="publishModalSubtitle" class="text-[11px] text-slate-400">Posting to: <span id="publishModalAccount" class="text-purple-300 font-semibold">@GamerClips</span></p>
+              <p id="publishLimitRow" class="hidden text-[11px] text-slate-400 mt-1"><i class="fa-solid fa-bolt text-amber-400"></i> Daily limit: <span id="publishLimitText" class="font-semibold text-white">0 / 10 Shorts posted today</span></p>
+            </div>
+          </div>
+          <button onclick="closePublishModal()" class="text-slate-400 hover:text-white text-sm p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Not-ready notice (shown when this platform cannot post yet) -->
+        <div id="publishNotReadyNote" class="hidden p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs"></div>
+
+        <!-- Form Content (Shown during editing & submitting) -->
+        <div id="publishFormContent" class="space-y-4">
+          <!-- Clip Title -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Post Title / Hook:</label>
+            <input 
+              type="text" 
+              id="publishTitleInput"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500"
+            >
+          </div>
+
+          <!-- Description / Caption -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Caption / Description:</label>
+            <textarea 
+              id="publishDescInput" 
+              rows="2"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500"
+            ></textarea>
+          </div>
+
+          <!-- Tags & Quick Chips -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-300">Viral Hashtags:</label>
+              <span class="text-[10px] text-slate-500">Click chips to add</span>
+            </div>
+            <input 
+              type="text" 
+              id="publishTagsInput"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-400 outline-none focus:border-purple-500 mb-1.5"
+            >
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="addTagChip('#shorts')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition">#shorts</button>
+              <button type="button" onclick="addTagChip('#gaming')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition">#gaming</button>
+              <button type="button" onclick="addTagChip('#viral')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition">#viral</button>
+              <button type="button" onclick="addTagChip('#fyp')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition">#fyp</button>
+              <button type="button" onclick="addTagChip('#clutch')" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition">#clutch</button>
+            </div>
+          </div>
+
+          <!-- Privacy -->
+          <div class="flex items-center justify-between pt-1 text-xs">
+            <span class="font-semibold text-slate-300">Privacy Status:</span>
+            <select id="publishPrivacySelect" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 outline-none">
+              <option value="public" selected>Public (Immediate Visibility)</option>
+              <option value="unlisted">Unlisted (Shareable link only)</option>
+              <option value="private">Private (Only you)</option>
+            </select>
+          </div>
+
+          <!-- Publish Action Button -->
+          <button 
+            id="publishActionBtn"
+            onclick="executePublish()"
+            class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition cursor-pointer"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Publish Now</span>
+          </button>
+        </div>
+
+        <!-- Publishing Success View -->
+        <div id="publishSuccessContent" class="hidden text-center py-4 space-y-4">
+          <div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mx-auto border border-emerald-500/30">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div>
+            <h4 id="successPlatformTitle" class="text-base font-bold text-white">Successfully Published!</h4>
+            <p id="successPlatformMessage" class="text-xs text-slate-300 mt-1">Your video has been posted and indexed.</p>
+          </div>
+          
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+            <span id="publishedUrlText" class="truncate text-purple-300 font-mono text-[11px] max-w-[260px]">https://youtube.com/shorts/...</span>
+            <button onclick="copyPublishedLink()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200 text-[10px] font-semibold transition">
+              Copy
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <a 
+              id="viewPublishedPostBtn" 
+              href="#" 
+              target="_blank" 
+              class="flex-1 py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition"
+            >
+              <span>View Post Live</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+            <button onclick="closePublishModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition">
+              Close
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toastNotification" class="fixed bottom-6 right-6 hidden z-50 max-w-md bg-slate-900 border border-purple-500/50 rounded-2xl p-4 shadow-2xl flex items-start gap-3 backdrop-blur-md">
+      <div id="toastIcon" class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h4 id="toastTitle" class="text-xs font-bold text-white">Published Successfully!</h4>
+        <p id="toastMessage" class="text-xs text-slate-300 mt-0.5">Your clip is live.</p>
+        <a id="toastLink" href="#" target="_blank" class="inline-block mt-2 text-[11px] font-semibold text-purple-400 hover:text-purple-300 underline">View Published Post &rarr;</a>
+      </div>
+      <button onclick="document.getElementById('toastNotification').classList.add('hidden')" class="text-slate-500 hover:text-white ml-auto text-xs">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    // Visual layout picker: the #layoutSelect dropdown stays the source of
+    // truth for the job request; the preview cards just set it (and follow
+    // it when the dropdown itself changes).
+    function setLayout(v) {
+      var sel = document.getElementById('layoutSelect');
+      if (sel) sel.value = v;
+      syncLayoutCards();
+    }
+    function syncLayoutCards() {
+      var sel = document.getElementById('layoutSelect');
+      var cur = sel ? sel.value : 'fill';
+      document.querySelectorAll('#layoutPicker .gx-layout-card').forEach(function (c) {
+        c.classList.toggle('gx-active', c.getAttribute('data-layout') === cur);
+      });
+    }
+    (function () {
+      var sel = document.getElementById('layoutSelect');
+      if (sel) sel.addEventListener('change', syncLayoutCards);
+      syncLayoutCards();
+    })();
+  </script>
+
+  <script>
+    const form = document.getElementById('clipForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressCard = document.getElementById('progressCard');
+    const progressBar = document.getElementById('progressBar');
+    const progressStatusText = document.getElementById('progressStatusText');
+    const progressPercent = document.getElementById('progressPercent');
+    const clipsGrid = document.getElementById('clipsGrid');
+    const clipCountBadge = document.getElementById('clipCountBadge');
+    const toastNotification = document.getElementById('toastNotification');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastLink = document.getElementById('toastLink');
+
+    // Social Modal references
+    const accountsModal = document.getElementById('accountsModal');
+    const publishModal = document.getElementById('publishModal');
+    const publishFormContent = document.getElementById('publishFormContent');
+    const publishSuccessContent = document.getElementById('publishSuccessContent');
+    const publishNotReadyNote = document.getElementById('publishNotReadyNote');
+    const publishModalTitle = document.getElementById('publishModalTitle');
+    const publishModalSubtitle = document.getElementById('publishModalSubtitle');
+    const publishModalAccount = document.getElementById('publishModalAccount');
+    const publishModalIcon = document.getElementById('publishModalIcon');
+    const publishTitleInput = document.getElementById('publishTitleInput');
+    const publishDescInput = document.getElementById('publishDescInput');
+    const publishTagsInput = document.getElementById('publishTagsInput');
+    const publishPrivacySelect = document.getElementById('publishPrivacySelect');
+    const publishActionBtn = document.getElementById('publishActionBtn');
+    const viewPublishedPostBtn = document.getElementById('viewPublishedPostBtn');
+    const publishedUrlText = document.getElementById('publishedUrlText');
+    const accountsCountBadge = document.getElementById('accountsCountBadge');
+
+    let currentPublishPlatform = 'youtube';
+    let currentPublishClipId = null;
+    let connectedAccounts = {
+      youtube: { connected: false, username: null },
+      tiktok: { connected: false, username: null },
+      instagram: { connected: false, username: null }
+    };
+
+    // Load Connected Accounts Status
+    async function loadAccounts() {
+      try {
+        const resp = await fetch('/api/social/accounts');
+        if (resp.ok) {
+          const data = await resp.json();
+          connectedAccounts = data.accounts || {};
+          updateAccountsUI();
+        }
+      } catch (e) {
+        console.error('Failed to load accounts', e);
+      }
+    }
+
+    function updateAccountsUI() {
+      let count = 0;
+      // YouTube
+      const yt = connectedAccounts.youtube || {};
+      const ytStatus = document.getElementById('ytAccountStatus');
+      const ytBadge = document.getElementById('ytBadge');
+      const ytConnectBtn = document.getElementById('ytConnectBtn');
+      const ytInput = document.getElementById('ytChannelInput');
+      if (yt.connected && yt.can_post) {
+        count++;
+        ytStatus.textContent = `Connected as ${yt.channel_name || yt.username || '@GamerClips'}`;
+        ytBadge.textContent = 'Active';
+        ytBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        ytConnectBtn.textContent = 'Disconnect';
+        ytConnectBtn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition';
+        ytConnectBtn.onclick = () => handleDisconnect('youtube');
+        if (yt.username) ytInput.value = yt.username;
+      } else if (yt.connected) {
+        ytStatus.textContent = 'Handle saved — sign in with Google to enable posting';
+        ytBadge.textContent = 'Setup needed';
+        ytBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        ytConnectBtn.textContent = 'Connect with Google';
+        ytConnectBtn.className = 'px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition';
+        ytConnectBtn.onclick = () => handleConnect('youtube');
+        if (yt.username) ytInput.value = yt.username;
+      } else {
+        ytStatus.textContent = 'Not connected';
+        ytBadge.textContent = 'Offline';
+        ytBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+        ytConnectBtn.textContent = 'Connect';
+        ytConnectBtn.className = 'px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-semibold transition';
+        ytConnectBtn.onclick = () => handleConnect('youtube');
+      }
+
+      // Daily Shorts limit row (editors: 10/day, admin: no limit).
+      // Shown only when the channel is actually connected for posting.
+      const ytLimitRow = document.getElementById('ytLimitRow');
+      const ytLimitText = document.getElementById('ytLimitText');
+      const ytLimitBar = document.getElementById('ytLimitBar');
+      if (yt.connected && yt.can_post) {
+        ytLimitRow.classList.remove('hidden');
+        if (yt.daily_limit) {
+          const used = yt.uploads_today || 0;
+          ytLimitText.textContent = `${used} / ${yt.daily_limit}`;
+          ytLimitBar.style.width = `${Math.min(100, used / yt.daily_limit * 100)}%`;
+        } else {
+          ytLimitText.textContent = 'No daily limit';
+          ytLimitBar.style.width = '100%';
+        }
+      } else {
+        ytLimitRow.classList.add('hidden');
+      }
+
+      // TikTok
+      const tt = connectedAccounts.tiktok || {};
+      const ttStatus = document.getElementById('ttAccountStatus');
+      const ttBadge = document.getElementById('ttBadge');
+      const ttConnectBtn = document.getElementById('ttConnectBtn');
+      const ttInput = document.getElementById('ttChannelInput');
+      if (tt.connected) {
+        ttStatus.textContent = `Handle saved as ${tt.username || '@TikTokCreator'} — direct posting not set up yet`;
+        ttBadge.textContent = 'Handle only';
+        ttBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        ttConnectBtn.textContent = 'Disconnect';
+        ttConnectBtn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition';
+        ttConnectBtn.onclick = () => handleDisconnect('tiktok');
+        if (tt.username) ttInput.value = tt.username;
+      } else {
+        ttStatus.textContent = 'Not connected';
+        ttBadge.textContent = 'Offline';
+        ttBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+        ttConnectBtn.textContent = 'Connect';
+        ttConnectBtn.className = 'px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-xs font-semibold transition';
+        ttConnectBtn.onclick = () => handleConnect('tiktok');
+      }
+
+      // Instagram
+      const ig = connectedAccounts.instagram || {};
+      const igStatus = document.getElementById('igAccountStatus');
+      const igBadge = document.getElementById('igBadge');
+      const igConnectBtn = document.getElementById('igConnectBtn');
+      const igInput = document.getElementById('igChannelInput');
+      if (ig.connected) {
+        igStatus.textContent = `Handle saved as ${ig.username || '@InstaCreator'} — direct posting not set up yet`;
+        igBadge.textContent = 'Handle only';
+        igBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        igConnectBtn.textContent = 'Disconnect';
+        igConnectBtn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition';
+        igConnectBtn.onclick = () => handleDisconnect('instagram');
+        if (ig.username) igInput.value = ig.username;
+      } else {
+        igStatus.textContent = 'Not connected';
+        igBadge.textContent = 'Offline';
+        igBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
+        igConnectBtn.textContent = 'Connect';
+        igConnectBtn.className = 'px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold transition';
+        igConnectBtn.onclick = () => handleConnect('instagram');
+      }
+
+      accountsCountBadge.textContent = `${count}/3`;
+    }
+
+    async function handleConnect(platform) {
+      // YouTube connects through real Google OAuth — every approved user
+      // links their OWN channel and posts to it.
+      if (platform === 'youtube') {
+        try {
+          const resp = await fetch('/api/oauth/google/auth-url');
+          const data = await resp.json();
+          if (resp.ok && data.auth_url) {
+            window.location.href = data.auth_url;
+          } else if (resp.status === 403) {
+            alert('Your account is waiting for admin approval. Ask the admin to approve your account first.');
+          } else {
+            alert('Google credentials are not configured yet. Ask the admin to add them in Admin → YouTube OAuth.');
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        return;
+      }
+      let username = '';
+      if (platform === 'tiktok') username = document.getElementById('ttChannelInput').value.trim() || 'TikTokViralClips';
+      if (platform === 'instagram') username = document.getElementById('igChannelInput').value.trim() || 'ReelsStreamer';
+
+      try {
+        const resp = await fetch(`/api/social/connect/${platform}?username=${encodeURIComponent(username)}`, {
+          method: 'POST'
+        });
+        if (resp.ok) {
+          await loadAccounts();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function handleDisconnect(platform) {
+      try {
+        const resp = await fetch(`/api/social/disconnect/${platform}`, {
+          method: 'POST'
+        });
+        if (resp.ok) {
+          await loadAccounts();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openAccountsModal() {
+      accountsModal.classList.remove('hidden');
+    }
+
+    function closeAccountsModal() {
+      accountsModal.classList.add('hidden');
+    }
+
+    // Publishing Modal Workflow
+    function openPublishModal(platform, clipId) {
+      currentPublishPlatform = platform.toLowerCase();
+      currentPublishClipId = clipId;
+
+      const title = document.getElementById(`title-${clipId}`)?.value || "Viral Stream Moment";
+      const tags = document.getElementById(`tags-${clipId}`)?.value || "#viral #shorts #gaming";
+      // The description is the one generated from this clip's own words.
+      // Clips made before this change have none stored, so they fall back
+      // to the old generic line.
+      const storedDesc = document.getElementById(`desc-${clipId}`)?.value || "";
+
+      publishTitleInput.value = title;
+      publishDescInput.value = storedDesc || `Highlight from stream: ${title}\n\nGenerated with StreamClipper #Shorts #Viral`;
+      publishTagsInput.value = tags;
+
+      const acc = connectedAccounts[currentPublishPlatform] || {};
+      const channelName = acc.can_post ? (acc.channel_name || acc.username || `@${currentPublishPlatform}Creator`) : `@${currentPublishPlatform}Creator (Direct Publish)`;
+
+      publishFormContent.classList.remove('hidden');
+      publishSuccessContent.classList.add('hidden');
+
+      // Gate the Publish button on real posting ability — never let the
+      // user "publish" to a platform that cannot actually receive it.
+      if (!acc.can_post) {
+        const msg = currentPublishPlatform === 'youtube'
+          ? 'YouTube isn\'t connected yet — ask the admin to connect the channel in Admin → YouTube OAuth. You can still download the clip and upload it manually.'
+          : (currentPublishPlatform === 'tiktok'
+            ? 'TikTok direct posting isn\'t set up yet (it needs a TikTok developer app with the Content Posting API). Download the clip and post it from the TikTok app.'
+            : 'Instagram direct posting isn\'t set up yet (it needs a Meta app with the Instagram Graph API). Download the clip and post it from the Instagram app.');
+        publishNotReadyNote.textContent = msg;
+        publishNotReadyNote.classList.remove('hidden');
+        publishActionBtn.disabled = true;
+        publishActionBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Posting Not Available</span>';
+      } else {
+        publishNotReadyNote.classList.add('hidden');
+        publishActionBtn.disabled = false;
+        publishActionBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Publish Now</span>';
+      }
+
+      if (currentPublishPlatform === 'youtube') {
+        publishModalTitle.textContent = 'Publish to YouTube Shorts';
+        publishModalIcon.className = 'w-8 h-8 rounded-lg bg-red-600/20 text-red-500 flex items-center justify-center text-lg';
+        publishModalIcon.innerHTML = '<i class="fa-brands fa-youtube"></i>';
+        publishModalAccount.textContent = channelName;
+      } else if (currentPublishPlatform === 'tiktok') {
+        publishModalTitle.textContent = 'Publish to TikTok';
+        publishModalIcon.className = 'w-8 h-8 rounded-lg bg-pink-600/20 text-pink-500 flex items-center justify-center text-lg';
+        publishModalIcon.innerHTML = '<i class="fa-brands fa-tiktok"></i>';
+        publishModalAccount.textContent = channelName;
+      } else {
+        publishModalTitle.textContent = 'Publish to Instagram Reels';
+        publishModalIcon.className = 'w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center text-lg';
+        publishModalIcon.innerHTML = '<i class="fa-brands fa-instagram"></i>';
+        publishModalAccount.textContent = channelName;
+      }
+
+      // Daily-limit line (YouTube only; admin has no limit).
+      const publishLimitRow = document.getElementById('publishLimitRow');
+      const publishLimitText = document.getElementById('publishLimitText');
+      if (currentPublishPlatform === 'youtube' && acc.can_post) {
+        publishLimitRow.classList.remove('hidden');
+        publishLimitText.textContent = acc.daily_limit
+          ? `${acc.uploads_today || 0} / ${acc.daily_limit} Shorts posted today`
+          : 'No daily limit';
+      } else {
+        publishLimitRow.classList.add('hidden');
+      }
+
+      publishModal.classList.remove('hidden');
+    }
+
+    function closePublishModal() {
+      publishModal.classList.add('hidden');
+    }
+
+    function addTagChip(tag) {
+      const cur = publishTagsInput.value;
+      if (!cur.includes(tag)) {
+        publishTagsInput.value = `${cur.trim()} ${tag}`.trim();
+      }
+    }
+
+    async function executePublish() {
+      publishActionBtn.disabled = true;
+      publishActionBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Uploading & Indexing Clip...</span>';
+
+      const title = publishTitleInput.value.trim();
+      const desc = publishDescInput.value.trim();
+      const tags = publishTagsInput.value.split(' ').map(t => t.trim()).filter(Boolean);
+      const privacy = publishPrivacySelect.value;
+
+      try {
+        const resp = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clip_id: currentPublishClipId,
+            platforms: [currentPublishPlatform],
+            title: title,
+            description: desc,
+            tags: tags,
+            privacy: privacy
+          })
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) {
+          alert(data.detail || 'Publication failed.');
+          publishActionBtn.disabled = false;
+          publishActionBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Retry Publish</span>';
+          return;
+        }
+        const result = (data.dispatched && data.dispatched[currentPublishPlatform]) || {};
+        if (result.status !== 'success') {
+          alert(result.message || 'Publication failed.');
+          publishActionBtn.disabled = false;
+          publishActionBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Retry Publish</span>';
+          return;
+        }
+
+        publishFormContent.classList.add('hidden');
+        publishSuccessContent.classList.remove('hidden');
+
+        document.getElementById('successPlatformTitle').textContent = `🚀 Live on ${result.platform || 'Platform'}!`;
+        document.getElementById('successPlatformMessage').textContent = result.message || 'Your video has been published.';
+        publishedUrlText.textContent = result.view_url || 'https://youtube.com/shorts/...';
+        viewPublishedPostBtn.href = result.view_url || '#';
+
+        // Also trigger brief toast notification
+        toastTitle.textContent = `🚀 Published to ${result.platform}!`;
+        toastMessage.textContent = `Uploaded: "${result.title || title}"`;
+        toastLink.href = result.view_url;
+        toastNotification.classList.remove('hidden');
+        setTimeout(() => toastNotification.classList.add('hidden'), 5000);
+
+      } catch (err) {
+        console.error(err);
+        alert('Publication error. Please ensure backend is running.');
+        publishActionBtn.disabled = false;
+        publishActionBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> <span>Retry Publish</span>';
+      }
+    }
+
+    function copyPublishedLink() {
+      const url = publishedUrlText.textContent;
+      navigator.clipboard.writeText(url);
+      alert('Share link copied to clipboard: ' + url);
+    }
+
+    // Escape text before it goes into innerHTML. Clip titles, channel
+    // names and user names come from outside (video titles, Google
+    // profiles) — a "<img onerror=...>" in any of them used to run as code
+    // in the browser of whoever viewed the clip list.
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderClips(clips) {
+      if (!clips || clips.length === 0) {
+        clipsGrid.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl p-8">
+            <i class="fa-solid fa-video text-4xl mb-3 text-slate-600 block"></i>
+            <p class="text-sm font-semibold text-slate-300">No clips generated yet.</p>
+            <p class="text-xs text-slate-500 mt-1">Paste your video link above and click <span class="text-purple-400 font-semibold">Generate Clips</span> to detect viral moments.</p>
+          </div>
+        `;
+        clipCountBadge.textContent = "0 Clips";
+        return;
+      }
+
+      clipCountBadge.textContent = `${clips.length} Clips Ready`;
+      clipsGrid.innerHTML = clips.map(clip => {
+        const vUrl = clip.video_url || clip.videoUrl;
+        const dUrl = clip.download_url || clip.downloadUrl || vUrl;
+        const score = Number(clip.virality_score || clip.viralityScore || 98);
+        const spike = clip.chat_spike || clip.chatSpike || "Peak Excitement";
+        const dur = Number(clip.duration || (clip.end_time - clip.start_time) || 30);
+        const start = Number(clip.start_time || clip.startTime || 0);
+        const end = Number(clip.end_time || clip.endTime || 30);
+        const fps = Number(clip.fps || 60);
+        const tagStr = Array.isArray(clip.tags) ? clip.tags.join(" ") : (clip.tags || "#viral #shorts");
+        const clipId = esc(clip.id);
+        const title = esc(clip.title || "Viral Stream Moment");
+        const desc = esc(clip.description || "");
+        const safeVUrl = esc(vUrl);
+        const safeDUrl = esc(dUrl);
+
+        return `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col transition hover:border-purple-600/50">
+          <!-- Video Preview (9:16 Aspect ratio container) -->
+          <div class="relative bg-black flex items-center justify-center p-3">
+            <div class="aspect-9-16 w-52 rounded-xl overflow-hidden shadow-2xl border border-slate-800 bg-slate-950 flex items-center justify-center">
+              <video 
+                src="${safeVUrl}" 
+                controls 
+                playsinline
+                preload="metadata"
+                class="w-full h-full object-cover"
+              ></video>
+            </div>
+            <!-- Virality Badge Overlay -->
+            <div class="absolute top-5 right-5 bg-purple-600/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-white shadow-lg flex items-center gap-1.5">
+              <i class="fa-solid fa-fire text-amber-300"></i>
+              ${score}% Viral
+            </div>
+          </div>
+
+          <!-- Clip Details & Controls -->
+          <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-400"></i> ${esc(spike)}</span>
+                <span class="font-mono text-purple-300 font-semibold">${dur}s clip</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 mb-2">
+                <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-closed-captioning"></i> Auto Subtitles
+                </span>
+                <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] font-bold">
+                  1080x1920 Fullscreen
+                </span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-gauge-high"></i> ${fps} FPS
+                </span>
+              </div>
+              <input 
+                type="text" 
+                id="title-${clipId}"
+                value="${title}" 
+                class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-medium focus:border-purple-500 outline-none"
+              >
+            </div>
+
+            <!-- Trim Controls -->
+            <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span class="font-medium text-slate-300">Fine Trim (seconds):</span>
+                <button onclick="saveTrim('${clipId}')" class="text-purple-400 hover:text-purple-300 font-semibold text-[11px]">Save Trim</button>
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="text-[10px] text-slate-500 uppercase font-semibold">Start (s)</label>
+                  <input type="number" id="start-${clipId}" step="0.5" value="${start}" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200 outline-none">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500 uppercase font-semibold">End (s)</label>
+                  <input type="number" id="end-${clipId}" step="0.5" value="${end}" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200 outline-none">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags Field -->
+            <input 
+              type="text" 
+              id="tags-${clipId}"
+              value="${esc(tagStr)}" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-purple-400 outline-none"
+            >
+            <!-- Per-clip description (generated from the clip's own words); the publish modal reads this instead of a fixed template -->
+            <textarea id="desc-${clipId}" class="hidden">${desc}</textarea>
+
+            <!-- Actions: Download Button & 1-Click Publish -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+              <!-- Direct Download MP4 Button (with 60FPS badge) -->
+              <a 
+                href="${safeDUrl}" 
+                download="${clipId}_${fps}fps_shorts.mp4" 
+                class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 transition cursor-pointer"
+              >
+                <i class="fa-solid fa-download"></i>
+                <span>Download 9:16 Video (${fps} FPS • MP4)</span>
+              </a>
+
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block pt-1">1-Click Publish:</span>
+              <div class="grid grid-cols-3 gap-2">
+                <button 
+                  onclick="openPublishModal('YouTube', '${clipId}')" 
+                  class="py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <i class="fa-brands fa-youtube"></i> YouTube Shorts
+                </button>
+                <button 
+                  onclick="openPublishModal('TikTok', '${clipId}')" 
+                  class="py-2 bg-pink-600/10 hover:bg-pink-600/20 text-pink-400 border border-pink-600/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <i class="fa-brands fa-tiktok"></i> TikTok
+                </button>
+                <button 
+                  onclick="openPublishModal('Instagram', '${clipId}')" 
+                  class="py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <i class="fa-brands fa-instagram"></i> Reels
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    async function saveTrim(clipId) {
+      const start = parseFloat(document.getElementById(`start-${clipId}`).value);
+      const end = parseFloat(document.getElementById(`end-${clipId}`).value);
+      try {
+        const res = await fetch(`/api/clips/${clipId}/trim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ start_time: start, end_time: end })
+        });
+        if (res.ok) {
+          alert('Trim timestamps saved successfully!');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('streamUrl').value.trim();
+      if (!url) return;
+
+      const layout = document.getElementById('layoutSelect').value;
+      const duration = parseInt(document.getElementById('durationSelect').value) || 30;
+      const subtitles = document.getElementById('subtitlesCheck').checked;
+      const num_clips = parseInt(document.getElementById('numClipsSelect').value) || 3;
+      const fps = parseInt(document.getElementById('fpsSelect').value) || 60;
+
+      // Clear previous clips and show active scanning indicator
+      clipsGrid.innerHTML = `
+        <div class="col-span-full py-16 text-center text-purple-400">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 block"></i>
+          <p class="text-sm font-semibold text-white">Analyzing stream & detecting ${num_clips} peak excitement clusters...</p>
+          <p class="text-xs text-slate-400 mt-1">Scanning decibels, stream-cutting highlights, and rendering ${fps}fps vertical clips with subtitles.</p>
+        </div>
+      `;
+      clipCountBadge.textContent = 'Processing...';
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50');
+      progressCard.classList.remove('hidden');
+      progressBar.style.width = '10%';
+      progressPercent.textContent = '10%';
+      progressStatusText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Initializing stream ingestion...';
+
+      try {
+        // 1. Submit job to backend
+        const jobResp = await fetch('/api/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, layout, duration, subtitles, fps, num_clips })
+        });
+        const jobData = await jobResp.json();
+        if (!jobResp.ok) {
+          // e.g. 429 when 2 jobs are already running. Without this check
+          // job_id is undefined and the poll below hits /api/jobs/undefined
+          // (404) forever — the bar sits at 10% "Initializing..." with no
+          // error, which is exactly the stuck state users report.
+          progressCard.classList.add('hidden');
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50');
+          alert(jobData.detail || 'Could not start the job. Try again.');
+          return;
+        }
+        const jobId = jobData.job_id;
+
+        // 2. Poll job status until complete
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusResp = await fetch(`/api/jobs/${jobId}`);
+            if (!statusResp.ok) {
+              // Job record gone (server restarted) — stop polling instead
+              // of spinning forever on the initial 10% state.
+              clearInterval(pollInterval);
+              progressCard.classList.add('hidden');
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+              alert('Lost track of the job (the server may have restarted). Try Generate again.');
+              return;
+            }
+            const statusData = await statusResp.json();
+
+            const p = statusData.progress || 15;
+            progressBar.style.width = `${p}%`;
+            progressPercent.textContent = `${p}%`;
+            progressStatusText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${esc(statusData.message || 'Processing stream...')}`;
+
+            if (statusData.status === 'completed') {
+              clearInterval(pollInterval);
+
+              // 3. Retrieve final clips
+              const clipsResp = await fetch(`/api/jobs/${jobId}/clips`);
+              const clipsData = await clipsResp.json();
+
+              progressCard.classList.add('hidden');
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+
+              renderClips(clipsData.clips);
+            } else if (statusData.status === 'failed') {
+              clearInterval(pollInterval);
+              progressCard.classList.add('hidden');
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+              alert(statusData.message || 'Processing failed. Unknown error');
+              renderClips([]);
+            }
+          } catch (pollErr) {
+            console.error('Polling error', pollErr);
+          }
+        }, 1500);
+
+      } catch (err) {
+        console.error('Submit error', err);
+        progressCard.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50');
+        alert('Could not start clipping job. Please ensure backend is running.');
+      }
+    });
+
+    // Load real processed clips on start
+    async function loadInitialClips() {
+      try {
+        const resp = await fetch('/api/jobs/latest/clips');
+        const data = await resp.json();
+        if (data && data.clips && data.clips.length > 0) {
+          renderClips(data.clips);
+        } else {
+          renderClips([]);
+        }
+      } catch (e) {
+        renderClips([]);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } catch (e) {
+        // The cookie is HttpOnly now; the server call is what logs out.
+        // Even if it fails, send the user to the login page.
+      }
+      window.location.href = '/login';
+    }
+
+    // Cookie life timer: shows when the cookies were last uploaded and
+    // counts down to the ~2h rotation. The server is the source of
+    // truth (refreshed every 30s); the countdown ticks locally every
+    // second so it feels live. Under 30 min left it turns amber;
+    // past expiry it turns red with the upload prompt.
+    let ytCookieExpiresAt = null;
+    function ytCookieTick() {
+      const dot = document.getElementById('ytCookieDot');
+      const state = document.getElementById('ytCookieState');
+      const countdown = document.getElementById('ytCookieCountdown');
+      const note = document.getElementById('ytCookieExpiredNote');
+      if (!dot || !state || !countdown || !note) return;
+      if (ytCookieExpiresAt === null) return;
+      const remain = Math.max(0, Math.floor((ytCookieExpiresAt - Date.now()) / 1000));
+      const h = Math.floor(remain / 3600);
+      const m = Math.floor((remain % 3600) / 60);
+      const s = remain % 60;
+      if (remain <= 0) {
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+        state.textContent = 'Cookies expired';
+        state.className = 'text-red-400';
+        countdown.textContent = '0h 00m 00s left';
+        countdown.className = 'font-mono font-bold text-red-400';
+        note.classList.remove('hidden');
+      } else {
+        const soon = remain < 30 * 60;
+        dot.className = 'inline-block w-2.5 h-2.5 rounded-full ' + (soon ? 'bg-amber-400' : 'bg-emerald-400');
+        state.textContent = soon ? 'Cookies expiring soon' : 'Cookies active';
+        state.className = soon ? 'text-amber-300' : 'text-emerald-300';
+        countdown.textContent = `Expires in ${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+        countdown.className = 'font-mono font-bold ' + (soon ? 'text-amber-300' : 'text-slate-200');
+        note.classList.add('hidden');
+      }
+    }
+    async function refreshYoutubeCookieTimer() {
+      const updated = document.getElementById('ytCookieUpdated');
+      const state = document.getElementById('ytCookieState');
+      try {
+        const resp = await fetch('/api/youtube-cookies/status');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data.exists || !data.updated_at) {
+          ytCookieExpiresAt = 0;
+          if (updated) updated.textContent = 'No cookies uploaded yet.';
+          ytCookieTick();
+          return;
+        }
+        // A fresh upload missing LOGIN_INFO (exported while not signed
+        // in to YouTube, or from the wrong profile) fails every
+        // download even though the timer says "active" — so show it
+        // as invalid, not active.
+        if (data.valid === false) {
+          ytCookieExpiresAt = 0;
+          const dot = document.getElementById('ytCookieDot');
+          const state = document.getElementById('ytCookieState');
+          const countdown = document.getElementById('ytCookieCountdown');
+          const note = document.getElementById('ytCookieExpiredNote');
+          if (dot) dot.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+          if (state) { state.textContent = 'Cookies invalid'; state.className = 'text-red-400'; }
+          if (countdown) { countdown.textContent = ''; countdown.className = 'font-mono font-bold text-red-400'; }
+          if (note) { note.textContent = 'This upload is missing the YouTube login cookie — re-export while signed in to YouTube and upload again.'; note.classList.remove('hidden'); }
+          if (updated) {
+            const d = new Date(data.updated_at);
+            updated.textContent = 'Updated ' + d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          }
+          return;
+        }
+        ytCookieExpiresAt = new Date(data.expires_at).getTime();
+        if (updated) {
+          const d = new Date(data.updated_at);
+          updated.textContent = 'Updated ' + d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' (expires ~2h after upload)';
+        }
+        ytCookieTick();
+      } catch (e) {
+        if (state) state.textContent = 'Could not check cookies.';
+      }
+    }
+    // Start the timer when the dashboard loads; refresh from the server
+    // every 30s and tick the countdown every second.
+    refreshYoutubeCookieTimer();
+    setInterval(refreshYoutubeCookieTimer, 30000);
+    setInterval(ytCookieTick, 1000);
+
+    // Dashboard cookie upload: any approved user can refresh the YouTube
+    // login cookies when Generate stops working. Same file + checks as Admin.
+    async function uploadYoutubeCookies() {
+      const input = document.getElementById('ytCookiesFile');
+      const status = document.getElementById('ytCookiesStatus');
+      if (!input.files || !input.files[0]) {
+        status.textContent = 'Choose a cookies.txt file first.';
+        status.className = 'text-xs text-red-400';
+        return;
+      }
+      const text = await input.files[0].text();
+      status.textContent = 'Uploading...';
+      status.className = 'text-xs text-slate-400';
+      try {
+        const resp = await fetch('/api/youtube-cookies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          status.textContent = `Saved — ${data.youtube_cookies} YouTube cookies. Generate Clips should work again.`;
+          status.className = 'text-xs text-emerald-400';
+          refreshYoutubeCookieTimer();
+        } else {
+          status.textContent = data.detail || 'Upload failed.';
+          status.className = 'text-xs text-red-400';
+        }
+      } catch (e) {
+        status.textContent = 'Upload failed. Check the connection and try again.';
+        status.className = 'text-xs text-red-400';
+      }
+    }
+
+    // Pending accounts: show the waiting notice and lock the Generate button.
+    async function checkApproval() {
+      try {
+        const resp = await fetch('/api/auth/me');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.user && data.user.role === 'pending') {
+          document.getElementById('pendingBanner').classList.remove('hidden');
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50');
+          submitBtn.innerHTML = '<i class="fa-solid fa-hourglass-half"></i><span>Waiting for Approval</span>';
+        }
+      } catch (e) { /* not signed in — middleware already redirects */ }
+    }
+
+    checkApproval();
+    loadAccounts();
+    loadInitialClips();
+    // Back from the Google channel-connect flow: confirm it worked.
+    if (new URLSearchParams(window.location.search).get('google_connected') === 'true') {
+      alert('YouTube channel connected! Your clips will now post to your own channel.');
+      history.replaceState({}, '', '/');
+    }
+  </script>
+</body>
+</html>
